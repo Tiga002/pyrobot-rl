@@ -4,14 +4,14 @@ locobot: #namespace
     ros_ws_abspath: "/home/developer/low_cost_ws"
     ros_ws_src_path: "src/pyrobot/robots/LoCoBot/thirdparty"
     # Fetch Task Realated parameters
-    n_actions: 5 # X+/-,Y+/-,Z+/ 5 joint delta
+    n_actions: 4 # X+/-,Y+/-,Z+/ 5 joint delta
     n_observations: 11 # XYZ of the TCP and the distance from GOAL
     n_max_iterations: 50
     position_ee_max: 1.0
     position_ee_min: -1.0
     threshold_error: 0.05
     use_random_goal: True
-    random_target_range: 0.3
+    random_target_range: 0.25
 
     initial_joint_pos: # This has to be validated in the fetch_moveit_test.py in fetch_openai_ros_example or something that tests this pos is possible
       joint_1: -1.71341686e-05
@@ -26,9 +26,12 @@ locobot: #namespace
       z: 4.04977648e-01
 
     goal_ee_pos: # This has to be validated in the fetch_moveit_test.py in fetch_openai_ros_example or something that tests this pos is possible
-      x: 0.339
-      y: 0.0116
-      z: 0.255
+      #x: 0.339
+      #y: 0.0116
+      #z: 0.255
+      x: 0.359
+      y: -0.176
+      z: 0.417
 
     position_delta: 0.1 # Increments of Decrements in the X/Y/Z positions each action step
 

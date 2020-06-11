@@ -17,13 +17,13 @@ def main():
     env.reset()
     print("Reset!")
     while len(actions) < numItr:
-        #obs = env.reset()
+        obs = env.reset()
         #print("ITERATION NUMBER ", len(actions))
         env.render()
         #print('env.action_space = {}'.format(env.action_space))i
         action = env.action_space.sample()
         #action = np.array([0.02, -0.9, 0.023, 0., 0.2])
-        print('===== Action = {}'.format(action))
+        #print('===== Action = {}'.format(action))
         obs = env.step(action)
 
 #        reachToGoal(env, obs)

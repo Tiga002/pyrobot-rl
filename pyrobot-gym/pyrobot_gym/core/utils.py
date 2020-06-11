@@ -40,10 +40,17 @@ def ctrl_set_action(sim, action):
             else:
                 idx = sim.model.jnt_qposadr[sim.model.actuator_trnid[i, 0]]
                 sim.data.ctrl[i] = sim.data.qpos[idx] + action[i]
-                sim.data.ctrl[i] = np.clip(sim.data.ctrl[i], -1.5, 1.5)
+                sim.data.ctrl[i] = np.clip(sim.data.ctrl[i], -1.25, 1.25)
+
+                #0.408, 0.721, -0.471, -1.4, 0.920
+                #sim.data.ctrl[0] = 0.408
+                #sim.data.ctrl[1] = 0.721
+                #sim.data.ctrl[2] = -0.471
+                #sim.data.ctrl[3] = -1.4
+                #sim.data.ctrl[4] = 0.920
                 # Debug
-                print('sim.data.ctrl[{}] = sim.data.qpos[{}] + action[{}]'.format(i, idx, i))
-                print('sim.data.ctrl[{}] = {} + {}'.format(i, sim.data.qpos[idx], action[i]))
+                #print('sim.data.ctrl[{}] = sim.data.qpos[{}] + action[{}]'.format(i, idx, i))
+                #print('sim.data.ctrl[{}] = {} + {}'.format(i, sim.data.qpos[idx], action[i]))
                 print('sim.data.ctrl[{}] = {}'.format(i, sim.data.ctrl[i]))
 
                 #new_state.qpos[idx] = sim.data.qpos[idx] + action[i]
@@ -51,6 +58,7 @@ def ctrl_set_action(sim, action):
                 #print('new_state.qpos[{}] = {}'.format(idx, new_state.qpos[idx]))
         #sim.set_state(new_state)
         #sim.forward()
+    return True
 
 def mocap_set_action(sim, action):
     """The action controls the robot using mocaps. Specifically, bodies

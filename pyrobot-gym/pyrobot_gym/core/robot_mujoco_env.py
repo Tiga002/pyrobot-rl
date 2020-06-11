@@ -1,9 +1,7 @@
 import os
 import copy
 import numpy as np
-
 import gym
-from gym import error, spaces
 from gym.utils import seeding
 
 try:
@@ -15,6 +13,7 @@ DEFAULT_SIZE = 500
 
 class RobotMujocoEnv(gym.GoalEnv):
     def __init__(self, model_path, initial_qpos, n_actions, n_substeps):
+        print("[RobotMujocoEnv] START init RobotMujocoEnv")
         if model_path.startswith('/'):
             fullpath = model_path
         else:
@@ -34,8 +33,8 @@ class RobotMujocoEnv(gym.GoalEnv):
 
         self.seed()
         #print('[DEBUG@RobotEnv] initial_qpos = {}'.format(initial_qpos))
-        self._env_setup(initial_qpos=initial_qpos)
-        
+        #self._env_setup(initial_qpos=initial_qpos)
+
         """ For testing
         self.initial_state = copy.deepcopy(self.sim.get_state())
         self.initial_state.qpos[5] = -1.22487753e-05
@@ -46,20 +45,7 @@ class RobotMujocoEnv(gym.GoalEnv):
         self.sim.set_state(self.initial_state)
         self.sim.forward()
         """
-        self.initial_gripper_xpos = self.sim.data.get_site_xpos('robot0:end_effector').copy()
-        print('[RobotEnv][AFTER] initial_gripper_xpos = {}'.format(self.initial_gripper_xpos))
-        #self.initial_gripper_xpos = self.sim.data.get_site_xpos('robot0:grip').copy()
-        #print('[RobotEnv][AFTER] initial_gripper_xpos = {}'.format(self.initial_gripper_xpos))
-        self.initial_state = copy.deepcopy(self.sim.get_state())
-        #print('RobotEnv:: sim_state_qpos = {}'.format(self.initial_state.qpos[5:10]))
-        self.goal = self._sample_goal()
-        obs = self._get_obs()
-        self.action_space = spaces.Box(-1., 1., shape=(n_actions,), dtype='float32')
-        self.observation_space = spaces.Dict(dict(
-            desired_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
-            achieved_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
-            observation=spaces.Box(-np.inf, np.inf, shape=obs['observation'].shape, dtype='float32'),
-        ))
+        print("[RobotMujocoEnv] END init RobotMujocoEnv")
 
     @property
     def dt(self):
@@ -73,32 +59,28 @@ class RobotMujocoEnv(gym.GoalEnv):
         return [seed]
 
     def step(self, action):
+        # Normalize the action within (-1,1)
         action = np.clip(action, self.action_space.low, self.action_space.high)
         self._set_action(action)
         self.sim.step()
-        self._step_callback()
-        obs = self._get_obs()
-
+        #self._step_callback()
+        obs = self._get_obs()  # TODO: add real robot implementation
         done = False
         info = {
-            'is_success': self._is_success(obs['achieved_goal'], self.goal),
+                'is_success': self._is_success(obs['achieved_goal'], self.goal)
         }
         reward = self.compute_reward(obs['achieved_goal'], self.goal, info)
         print('[STEP] Rewards = {}'.format(reward))
+        print('[STEP] info = {}'.format(info))
         return obs, reward, done, info
 
     def reset(self):
-        # Attempt to reset the simulator. Since we randomize initial conditions, it
-        # is possible to get into a state with numerical issues (e.g. due to penetration or
-        # Gimbel lock) or we may not achieve an initial condition (e.g. an object is within the hand).
-        # In this case, we just keep randomizing until we eventually achieve a valid initial
-        # configuration.
-        super(RobotEnv, self).reset()
+        print('[RESET]')
         did_reset_sim = False
         while not did_reset_sim:
             did_reset_sim = self._reset_sim()
-        self.goal = self._sample_goal().copy()
         obs = self._get_obs()
+        print('End [RESET]')
         return obs
 
     def close(self):
@@ -130,17 +112,25 @@ class RobotMujocoEnv(gym.GoalEnv):
         return self.viewer
 
     # Extension methods
-    # ----------------------------
-
+    # ---------------------------
     def _reset_sim(self):
-        """Resets a simulation and indicates whether or not it was successful.
+        """
+        Reset the Simulation by reset all the joints to initial positions
+
+        Resets a simulation and indicates whether or not it was successful.
         If a reset was unsuccessful (e.g. if a randomized state caused an error in the
         simulation), this method should indicate such a failure by returning False.
         In such a case, this method will be called again to attempt a the reset again.
         """
-        self.sim.set_state(self.initial_state)
-        self.sim.forward()
+        # Set to the startup position and sample a goal
+        self._set_init_pose()
         return True
+
+    def _set_init_pose(self):
+        """
+        Sets the Robot in its startup initial Pose
+        """
+        raise NotImplementedError()
 
     def _get_obs(self):
         """Returns the observation.
@@ -162,6 +152,10 @@ class RobotMujocoEnv(gym.GoalEnv):
         """
         raise NotImplementedError()
 
+    def compute_reward(self, achieved_goal, goal, info):
+        """Calculates the reward to give based on the observations given.
+        """
+        raise NotImplementedError()
     def _env_setup(self, initial_qpos):
         """Initial configuration of the environment. Can be used to configure initial state
         and extract information from the simulation.

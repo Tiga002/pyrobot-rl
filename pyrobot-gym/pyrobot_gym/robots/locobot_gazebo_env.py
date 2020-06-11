@@ -170,6 +170,7 @@ class LocoBotGazeboEnv(robot_gazebo_env.RobotGazeboEnv):
         positions_array[2] = joint_positions[2]
         positions_array[3] = joint_positions[3]
         positions_array[4] = joint_positions[4]
+
         # Check #1
         # Check is it within the joint limits
         conditions = [positions_array[0] <= JOINT_1_LIMIT, positions_array[0] >= -JOINT_1_LIMIT,
@@ -210,6 +211,10 @@ class LocoBotGazeboEnv(robot_gazebo_env.RobotGazeboEnv):
                 result = self.robot.gripper.close()
                 result = self.robot.arm.set_joint_positions(positions_array, plan=False)
         #time.sleep(1)
+        # Only in play
+        #if result == False:
+        #    self.robot.arm.go_home()
+        #    rospy.logdebug('Reset back to the startup position and start again ~~~')
 
         return result
 
@@ -394,75 +399,3 @@ class Object_Position(object):
                                  data.pose.orientation.x,
                                  data.pose.orientation.y,
                                  data.pose.orientation.z])
-
-
-# ---------------------------------
-"""
-class MoveLocoBot(object):
-
-    #This Class handle the operation of LocoBot using MoveIt Group
-
-
-    def __init(self):
-        rospy.logdebug("======= In MoveLocoBot")
-        # Initial the moveit
-        moveit_commander.roscpp_initialize(sys.argv)
-        self.robot = moveit_commander.RobotCommander()
-        self.scene = moveit_commander.PlanningSceneInterface()
-        self.move_group_commander = moveit_commander.MoveGroupCommander("arm")
-        rospy.logdebug("======== Out MoveLocoBot")
-
-    def ee_traj(self, pose):
-
-        #Using MoveIt API to drive the end effector to the desired pose
-
-        # Set the desired end effector pose
-        self.move_group_commander.set_pose_target(pose)
-        #Plan and Execute the trajectory
-        result = self.execute_trajectory()
-        return result
-
-    def joint_traj(self, positions_array):
-
-        #Using MoveIt API to rotate the joints to the desired joint positions
-
-        self.desired_joint_positions = self.move_group_commander.get_current_joint_values()
-        # DEBUG:
-        print("[joint_traj] current joint pos = {}".format(self.desired_joint_positions))
-        # Assign the desired joint positions
-        self.desired_joint_positions[12] = positions_array[0]
-        self.desired_joint_positions[13] = positions_array[1]
-        self.desired_joint_positions[14] = positions_array[2]
-        self.desired_joint_positions[15] = positions_array[3]
-        self.desired_joint_positions[16] = positions_array[4]
-        self.desired_joint_positions[17] = positions_array[5] # finger R
-        self.desired_joint_positions[18] = positions_array[6] # finger L
-        # Set the desired joint positions here
-        self.move_group_commander.set_joint_value_target(self.desired_joint_positions)
-        # Plan and execute
-        result = self.execute_trajectory()
-        return result
-
-    def execute_trajectory(self):
-
-        #Once the trajectories/desired pose has been set,
-        #Make and plan to the desired destination
-        #in Homogeneous Space [x,y,z,yaw,pitch,roll] and return the result of execution
-
-        # Plan the Trajectory
-        self.plan = self.move_group_commander.plan()
-        # Execute the trajectory
-        result = self.move_group_commander.go(wait=True)
-        return result
-
-    def ee_pose(self):
-
-        #Get the end effector pose
-
-        gripper_pose = self.move_group_commander.get_current_pose()
-        return gripper_pose
-
-    def ee_rpy(self, request):
-        gripper_rpy = self.move_group_commander.get_current_rpy()
-        return gripper_rpy
-"""

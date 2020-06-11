@@ -93,6 +93,8 @@ class LocoBotGazeboReachEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle)
         #self.gripper_rotation = [1., 0., 1., 0.]
         self.gripper_rotation = [0.245, 0.613, -0.202, 0.723]
         self.last_joint_positions = None
+        self.last_gripper_target = None
+
 
 
     def _set_init_pose(self):
@@ -109,11 +111,6 @@ class LocoBotGazeboReachEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle)
         rospy.logdebug("Initial Joint Positions:")
         rospy.logdebug(self.initial_joint_pos)
 
-        # First we test the desired goal position is achievable or not
-        if self.use_random_goal:
-            rospy.logdebug("SAMPLING a new DESIRED GOAL Position")
-            self.desired_position = self._sample_goal(self.initial_ee_pos)
-
         self.movement_result = self._set_startup_position()
         gripper_pose = self.get_end_effector_pose()
         self.last_gripper_target = [gripper_pose.pose.position.x,
@@ -123,50 +120,12 @@ class LocoBotGazeboReachEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle)
         self.last_joint_positions = self.get_joints_position()
         rospy.logdebug("Initial Joint Position = {}".format(self.last_joint_positions))
 
+        # Samle a Goal or Not
+        if self.use_random_goal:
+            rospy.logdebug("SAMPLING a new DESIRED GOAL Position")
+            self.desired_position = self._sample_goal(self.last_gripper_target)
 
-        """
-        rospy.logdebug("Moving to TEST DESIRED GOAL Position")
-        action = self.create_action(self.desired_position, self.gripper_rotation)
-        # Use MoveIT API to reach the desired goal position for testing
-        self.movement_result = self.set_trajectory_ee(action)
 
-        # If the desired goal position is approachable
-        if self.movement_result:
-            # Set the Arm to the startup initial positions
-            rospy.logdebug("Moving to Startup Initial Position with [JointSpaceControl]")
-            self.movement_result = self.set_trajectory_initial_joints(self.initial_joint_pos)
-            # Measure the initial joint positions
-            self.last_joint_positions = self.get_joints_position()
-            rospy.logdebug("Initial Joint Position = {}".format(self.last_joint_positions))
-            # Measure the initial end effector positions
-            gripper_pose = self.get_end_effector_pose()
-            self.last_gripper_target = [gripper_pose.pose.position.x,
-                                        gripper_pose.pose.position.y,
-                                        gripper_pose.pose.position.z]
-            rospy.logdebug("Initial EE Position = {}".format(self.last_gripper_target))
-            # Measure the distance between the initial end-effector position  with the desired goal position
-            self.current_dist_from_des_pos_ee = self.calculate_distance_between(
-                                                self.desired_position,
-                                                self.last_gripper_target)
-            rospy.logdebug("Initial distance from goal = {}".format(self.current_dist_from_des_pos_ee))
-
-        else:
-            rospy.logerr("Desired Goal End Effector Position is not possible")
-            # Set the Arm to the startup initial positions
-            rospy.logdebug("Moving to Startup Initial Position with [JointSpaceControl]")
-            self.movement_result = self.set_trajectory_initial_joints(self.initial_joint_pos)
-            # Measure the initial joint positions
-            self.last_joint_positions = self.get_joints_position()
-            rospy.logdebug("Initial Joint Position = {}".format(self.last_joint_positions))
-            # Measure the initial end effector positions
-            gripper_pose = self.get_end_effector_pose()
-            self.last_gripper_target = [gripper_pose.pose.position.x,
-                                        gripper_pose.pose.position.y,
-                                        gripper_pose.pose.position.z]
-            rospy.logdebug("Initial EE Position = {}".format(self.last_gripper_target))
-            #rospy.loginfo("Reset and re-sample goal")
-            #self.reset()
-        """
         self.last_action= "INIT"
         rospy.logdebug("Set to Startup initial pose ---> " + str(self.movement_result))
 
@@ -183,53 +142,20 @@ class LocoBotGazeboReachEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle)
         rospy.logdebug("Init Env Variables...END")
 
     def _set_action(self, action):
-        """
-        Joint Space Control : 1 DOF each step
-        """
-        """
-        Discrete action space
-        delta_joint_positions = [0.0] * (self.n_actions)
 
-        # 1 DOF of Increment/Decrement in the joint space
-        if action == 0:  # Joint 1
-            delta_joint_positions[0] += self.position_delta
-            self.last_action = "joint_1 [+]"
-        elif action == 1:  # Joint 1
-            delta_joint_positions[0] -= self.position_delta
-            self.last_action = "joint_1 [-]"
-        elif action == 2:  # Joint 2
-            delta_joint_positions[1] -= self.position_delta
-            self.last_action = "joint_2 [+]"
-        elif action == 3:  # Joint 2
-            delta_joint_positions[1] -= self.position_delta
-            self.last_action = "joint_2 [-]"
-        elif action == 4:  # Joint 3
-            delta_joint_positions[2] -= self.position_delta
-            self.last_action = "joint_3 [+]"
-        elif action == 5:  # Joint 3
-            delta_joint_positions[2] -= self.position_delta
-            self.last_action = "joint_3 [-]"
-        elif action == 6:  # Joint 4
-            delta_joint_positions[3] -= self.position_delta
-            self.last_action = "joint_4 [+]"
-        elif action == 7:  # Joint 4
-            delta_joint_positions[3] -= self.position_delta
-            self.last_action = "joint_4 [-]"
-        elif action == 8:  # Joint 5
-            delta_joint_positions[4] -= self.position_delta
-            self.last_action = "joint_5 [+]"
-        elif action == 9:  # Joint 5
-            delta_joint_positions[4] -= self.position_delta
-            self.last_action = "joint_5 [-]"
-        """
-
+        assert action.shape == (4,)
+        action = action*0.25 # restrict the action
         cur_joint_pos = self.last_joint_positions
         cur_joint_pos[0] += action[0]
         cur_joint_pos[1] += action[1]
         cur_joint_pos[2] += action[2]
         cur_joint_pos[3] += action[3]
-        cur_joint_pos[4] += action[4]
+        cur_joint_pos[4] = cur_joint_pos[4]
 
+        # Clip the joint angle
+        cur_joint_pos = np.array(cur_joint_pos)
+        for i in range(5):
+            cur_joint_pos[i] = np.clip(cur_joint_pos[i], -1.25, 1.25)
         # Apply action to simulation
         self.movement_result = self.set_trajectory_joints(cur_joint_pos)
         if self.movement_result:
@@ -260,11 +186,13 @@ class LocoBotGazeboReachEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle)
         obs = np.concatenate([end_effector_position,
                             relative_dis_ee_goal,
                             joint_positions])
-
+        rospy.loginfo('[Get OBS] joint_positions = {}'.format(joint_positions))
+        rospy.loginfo('[Get OBS] eff_pos = {}'.format(end_effector_position))
+        rospy.loginfo('[Get OBS] goal = {}'.format(self.desired_position))
         obs_dict = {'observation': obs.copy(),
                     'achieved_goal': end_effector_position.copy(),
                     'desired_goal': np.array(self.desired_position)}
-        rospy.logdebug("Observations =======>>> {}".format(obs_dict))
+        #rospy.logdebug("Observations =======>>> {}".format(obs_dict))
 
         return obs_dict
 
@@ -359,26 +287,27 @@ class LocoBotGazeboReachEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle)
         """
         Return Goal in python list
         """
-        end_effector_starting_pos = np.array([initial_ee_pos['x'],
-                                              initial_ee_pos['y'],
-                                              initial_ee_pos['z']])
-        goal = end_effector_starting_pos + self.np_random.uniform(
-                                            -self.random_target_range,
-                                            self.random_target_range,
-                                            size=3)
-        conditions = [goal[0] <= BOUNDS_FRONTWALL, goal[0] >= BOUNDS_BACKWALL,
-                      goal[1] <= BOUNDS_LEFTWALL, goal[1] >= BOUNDS_RIGHTWALL,
-                      goal[2] <= BOUNDS_CEILLING, goal[2] >= BOUNDS_FLOOR]
-        violated_boundary = False
-        for condition in conditions:
-            if not condition:
-                violated_boundary = True
-                break
-        if violated_boundary == True:
-            rospy.logerr('Need to resample a valid goal')
-            return self._sample_goal(self.initial_ee_pos)
-        else:
-            rospy.loginfo("Sampled Goal = {}".format(goal))
-            goal = goal.tolist()
+        end_effector_starting_pos = np.array(initial_ee_pos)
+        sample_goal = True
+        while sample_goal == True:
+            goal = end_effector_starting_pos + self.np_random.uniform(
+                                                -0.1,
+                                                self.random_target_range,
+                                                size=3)
+            conditions = [goal[0] <= BOUNDS_FRONTWALL, goal[0] >= BOUNDS_BACKWALL,
+                          goal[1] <= BOUNDS_LEFTWALL, goal[1] >= BOUNDS_RIGHTWALL,
+                          goal[2] <= BOUNDS_CEILLING, goal[2] >= BOUNDS_FLOOR]
+            violated_boundary = False
+            for condition in conditions:
+                if not condition:
+                    violated_boundary = True
+                    break
+            if violated_boundary == True:
+                rospy.logerr('Need to resample a valid goal')
+                sample_goal = True
+            else:
+                sample_goal = False
 
+        rospy.loginfo("Sampled Goal = {}".format(goal))
+        goal = goal.tolist()
         return goal
