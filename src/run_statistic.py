@@ -39,6 +39,11 @@ try:
 except ImportError:
     roboschool = None
 
+"""Record the Episode Information"""
+ActionSaver = []
+ObsSaver = []
+InfoSaver = []
+
 _game_envs = defaultdict(set)
 for env in gym.envs.registry.all():
     # TODO: solve this with regexes
@@ -220,12 +225,18 @@ def main(args):
     # Play the Model
     if args.play:
         logger.log("Running trained Model")
+        """Record the Episode Information"""
+        #episodeActions = []
+        #episodeObs = []
+        #episodeInfo = []
+
         obs = env.reset()
+
         state = model.initial_state if hasattr(model, 'initial_state') else None
         dones = np.zeros((1,))
 
         episode_rew = np.zeros(env.num_envs) if isinstance(env, VecEnv) else np.zeros(1)
-
+        """
         while True:
             if state is not None:
                 actions, _, state, _ = model.step(obs, S=state, M=dones)
@@ -239,8 +250,41 @@ def main(args):
                 for i in np.nonzero(done)[0]:
                     print('episode_rew={}'.format(episode_rew[i]))
                     episode_rew[i] = 0
+        """
+        # total 2500 timesteps
+        #for ep in range(50): # Run 50 episodes
+        for t in range(50):  #50 timesteps per episode
+            print("============== Step {} ==================".format(t))
+            rolloutActions = []
+            rolloutObs = []
+            rolloutInfo = []
+            if state is not None:
+                actions, _, state, _ = model.step(obs, S=state, M=dones)
+            else:
+                actions, _, _, _ = model.step(obs)
+
+            obs, rew, done, info = env.step(actions)
+            rolloutActions.append(actions)
+            rolloutObs.append(obs)
+            rolloutInfo.append(info)
+            episode_rew += rew
+            #env.render()
+            done_any = done.any() if isinstance(done, np.ndarray) else done
+            if done_any:
+                for i in np.nonzero(done)[0]:
+                    print('episode_rew={}'.format(episode_rew[i]))
+                    episode_rew[i] = 0
+                #print(" ============================== BREAK ===========================")
+                #break
+            #episodeActions.append(rolloutActions)
+            #episodeObs.append(rolloutObs)
+            #episodeInfo.append(rolloutInfo)
+            ActionSaver.append(rolloutActions)
+            ObsSaver.append(rolloutObs)
+            InfoSaver.append(rolloutInfo)
 
     env.close()
+    np.savez_compressed("gazebo_5.npz", acs=ActionSaver, obs=ObsSaver, info=InfoSaver)
     return model
 
 

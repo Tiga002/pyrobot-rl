@@ -91,7 +91,7 @@ class LocoBotMujocoReachEnv(LocoBotMujocoEnv, utils.EzPickle):
         self.obj_range = obj_range
         self.target_range = target_range
         self.distance_threshold = distance_threshold
-        self.use_random_goal = True
+        self.use_random_goal = False
         self.last_joint_positions = None
         self.last_gripper_xpos = None
         self.valid_move = True
@@ -114,7 +114,7 @@ class LocoBotMujocoReachEnv(LocoBotMujocoEnv, utils.EzPickle):
             print("SAMPLING a new DESIRED GOAL Position")
             self.goal = self._sample_goal(self.initial_gripper_xpos)
         else:
-            self.goal = np.array([0.359, -0.176, 0.417])
+            self.goal = np.array([0.32126746, -0.03747156, 0.26531804])
 
         # Record the joint pos and end effector pos right after the reset
         self.last_gripper_xpos = self.sim.data.get_site_xpos('robot0:end_effector')
