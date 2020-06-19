@@ -10,7 +10,7 @@ observation = []
 in0fos = []
 
 def main():
-    env = gym.make('LocoBotReach-v1')
+    env = gym.make('LocoBotReach-v3')
     #env = gym.make('FetchReach-v1')
     numItr = 100
     initStateSpace = "random"
@@ -24,7 +24,7 @@ def main():
         action = env.action_space.sample()
         #action = np.array([0.02, -0.9, 0.023, 0., 0.2])
         #print('===== Action = {}'.format(action))
-        #obs = env.step(action)
+        obs = env.step(action)
 
 #        reachToGoal(env, obs)
 

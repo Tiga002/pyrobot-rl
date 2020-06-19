@@ -236,23 +236,10 @@ def main(args):
         dones = np.zeros((1,))
 
         episode_rew = np.zeros(env.num_envs) if isinstance(env, VecEnv) else np.zeros(1)
-        """
-        while True:
-            if state is not None:
-                actions, _, state, _ = model.step(obs, S=state, M=dones)
-            else:
-                actions, _, _, _ = model.step(obs)
-            obs, rew, done, info = env.step(actions)
-            episode_rew += rew
-            #env.render()
-            done_any = done.any() if isinstance(done, np.ndarray) else done
-            if done_any:
-                for i in np.nonzero(done)[0]:
-                    print('episode_rew={}'.format(episode_rew[i]))
-                    episode_rew[i] = 0
-        """
+
         # total 2500 timesteps
         #for ep in range(50): # Run 50 episodes
+        print("~~~~~~~Start playing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         for t in range(50):  #50 timesteps per episode
             print("============== Step {} ==================".format(t))
             rolloutActions = []
@@ -274,15 +261,15 @@ def main(args):
                 for i in np.nonzero(done)[0]:
                     print('episode_rew={}'.format(episode_rew[i]))
                     episode_rew[i] = 0
-                #print(" ============================== BREAK ===========================")
-                #break
+                print(" ============================== BREAK ===========================")
+                break
             #episodeActions.append(rolloutActions)
             #episodeObs.append(rolloutObs)
             #episodeInfo.append(rolloutInfo)
             ActionSaver.append(rolloutActions)
             ObsSaver.append(rolloutObs)
             InfoSaver.append(rolloutInfo)
-
+    print("===============================================================================================================")
     env.close()
     np.savez_compressed("gazebo_5.npz", acs=ActionSaver, obs=ObsSaver, info=InfoSaver)
     return model

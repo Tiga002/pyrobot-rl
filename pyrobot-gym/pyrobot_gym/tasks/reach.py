@@ -3,7 +3,7 @@ from gym import utils
 import copy
 import rospy
 from gym import spaces
-from pyrobot_gym.robots import locobot_gazebo_env
+from pyrobot_gym.robots import locobot_env
 from gym.envs.registration import register
 import numpy as np
 from sensor_msgs.msg import JointState
@@ -20,14 +20,14 @@ BOUNDS_RIGHTWALL = -.45
 BOUNDS_FRONTWALL = .5
 BOUNDS_BACKWALL = -.13
 
-class LocoBotGazeboReachEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle):
+class LocoBotReachEnv(locobot_env.LocoBotEnv, utils.EzPickle):
     def __init__(self):
         # Launch the Task Simulation Environment
 
         # 1: Load Params from the config YAML file to this Task Environment
         LoadYamlFileParamsTest(rospackage_name="pyrobot_rl",
                                rel_path_from_package_to_file="pyrobot-gym/pyrobot_gym/tasks/config",
-                               yaml_file_name="locobot_gazebo_reach.yaml")
+                               yaml_file_name="locobot_reach.yaml")
 
         # 2: get the ROS workspace abs path from the launch file
         ros_ws_abspath = rospy.get_param("/locobot/ros_ws_abspath", None)
@@ -37,16 +37,10 @@ class LocoBotGazeboReachEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle)
                                                " DOESNT exist, execute: mkdir -p " + ros_ws_abspath + \
                                                "/src;cd " + ros_ws_abspath + ";catkin_make"
 
-        # Roslaunch the simulation world(task) environment
-        #ROSLauncher(rospackage_name="locobot_gazebo",
-        #            #launch_file_name="start_world.launch",
-        #            launch_file_name="gazebo.launch",
-        #            ros_ws_abspath=ros_ws_abspath)
-
-        rospy.logdebug("Entered LocoBotGazeboReachEnv")
+        rospy.logdebug("Entered LocoBotReachEnv")
         self.get_params()
 
-        super(LocoBotGazeboReachEnv, self).__init__(ros_ws_abspath, ros_ws_src_path)
+        super(LocoBotReachEnv, self).__init__(ros_ws_abspath, ros_ws_src_path)
 
         # Define the action space here (since task specific)
         #self.action_space = spaces.Discrete(self.n_actions)
@@ -58,7 +52,7 @@ class LocoBotGazeboReachEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle)
             observation=spaces.Box(-np.inf, np.inf, shape=obs['observation'].shape, dtype='float32'),
         ))
 
-        #super(LocoBotGazeboReachEnv, self).__init__(ros_ws_abspath, ros_ws_src_path)
+        #super(LocoBotReachEnv, self).__init__(ros_ws_abspath, ros_ws_src_path)
 
     def get_params(self):
         """

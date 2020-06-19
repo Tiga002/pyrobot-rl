@@ -1,5 +1,6 @@
 from pyrobot_gym.core.robot_mujoco_env import RobotMujocoEnv
 from pyrobot_gym.core.robot_gazebo_env import RobotGazeboEnv
+from pyrobot_gym.core.robot_env import RobotEnv
 
 from pyrobot_gym.core.controllers_connection import ControllersConnection
 from pyrobot_gym.core.gazebo_connection import GazeboConnection

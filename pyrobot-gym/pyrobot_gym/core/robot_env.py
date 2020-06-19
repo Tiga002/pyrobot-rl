@@ -2,24 +2,14 @@ import rospy
 import time
 import gym
 from gym.utils import seeding
-from .gazebo_connection import GazeboConnection
-from .controllers_connection import ControllersConnection
-
 #from pyrobot_gym.msg import RLExperimentInfo
 
-class RobotGazeboEnv(gym.GoalEnv):
+class RobotEnv(gym.GoalEnv):
 
-    def __init__(self, robot_name_space, controllers_list, reset_controls,
-                start_init_physics_parameters=True,
-                reset_world_or_sim="SIMULATION"):
+    def __init__(self, robot_name_space):
         # To reset simulations
-        rospy.logdebug("START init RobotGazeboEnv")
-        # Create the Gazebo Connection Instance
-        self.gazebo = GazeboConnection(start_init_physics_parameters, reset_world_or_sim)
-        self.controllers_object = ControllersConnection(namespace=robot_name_space, controllers_list=controllers_list)
-        self.reset_controls = reset_controls
+        rospy.logdebug("START init RobotEnv")
         self.seed()
-
         # Setup ROS related variables
         self.episode_num = 0
         self.cumulated_episode_reward = 0
@@ -34,13 +24,7 @@ class RobotGazeboEnv(gym.GoalEnv):
         This has to do with the fact that some plugins with tf, dont understand the reset of the simulation
         and need to be reseted to work properly.
         """
-        self.gazebo.unpauseSim()
-        if self.reset_controls:
-            self.controllers_object.reset_controllers()
-
-
-
-        rospy.logdebug("END init RobotGazeboEnv")
+        rospy.logdebug("END init RobotEnv")
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -60,10 +44,7 @@ class RobotGazeboEnv(gym.GoalEnv):
         simulation and get the observations result of performing that action.
         """
         rospy.loginfo("START STEP OpenAI ROS")
-
-        self.gazebo.unpauseSim()
         self._set_action(action)
-        self.gazebo.pauseSim()
         obs = self._get_obs()
         #done = self._is_done(obs)
         #done = False
@@ -80,17 +61,16 @@ class RobotGazeboEnv(gym.GoalEnv):
         print('[STEP] Rewards = {}'.format(reward))
         print('[STEP] info = {}'.format(info))
         self.cumulated_episode_reward += reward
-
         rospy.loginfo("END STEP OpenAIROS===================================")
         return obs, reward, done, info
 
     def reset(self):
-        rospy.loginfo("Reseting RobotGazeboEnv =============================================================================================")
-        self._reset_sim()
+        rospy.loginfo("Reseting RobotEnv =============================================================================================")
+        self._reset_run()
         self._init_env_variables()
         self._update_episode()
         obs = self._get_obs()
-        rospy.loginfo("END Reseting RobotGazeboEnv")
+        rospy.loginfo("END Reseting RobotEnv")
         return obs
 
     def close(self):
@@ -99,8 +79,8 @@ class RobotGazeboEnv(gym.GoalEnv):
         Use it for closing GUIS and other systems that need closing.
         :return:
         """
-        rospy.logdebug("Closing RobotGazeboEnvironment")
-        rospy.signal_shutdown("Closing RobotGazeboEnvironment")
+        rospy.logdebug("Closing RobotEnvironment")
+        rospy.signal_shutdown("Closing RobotEnvironment")
 
     def _update_episode(self):
         """
@@ -135,35 +115,15 @@ class RobotGazeboEnv(gym.GoalEnv):
     # Extension methods
     # ---------------------
 
-    def _reset_sim(self):
+    def _reset_run(self):
         """
         Resets a simulatio
         """
-        rospy.logdebug("RESET SIM STARTS")
-        if self.reset_controls:
-            rospy.logdebug("RESET CONTROLLERS")
-            self.gazebo.unpauseSim()
-            self.controllers_object.reset_controllers()
-            self._check_all_systems_ready()
-            self._set_init_pose()
-            self.gazebo.pauseSim()
-            self.gazebo.resetSim()
-            self.gazebo.unpauseSim()
-            self.controllers_object.reset_controllers()
-            self._check_all_systems_ready()
-            self.gazebo.pauseSim()
-        else:
-            rospy.logwarn("DONT RESET CONTROLLERS")
-            self.gazebo.unpauseSim()
-            self._check_all_systems_ready()
-            self._set_init_pose()
-            self.gazebo.pauseSim()
-            self.gazebo.resetSim()
-            self.gazebo.unpauseSim()
-            self._check_all_systems_ready()
-            self.gazebo.pauseSim()
-
-        rospy.logdebug("RESET SIM END")
+        rospy.logdebug("RESET RUN STARTS")
+        self._check_all_systems_ready()
+        self._set_init_pose()
+        self._check_all_systems_ready()
+        rospy.logdebug("RESET RUN END")
         return True
 
     def _set_init_pose(self):

@@ -18,3 +18,9 @@ register(id='LocoBotReach-v2',
          #kwargs=kwargs,
          max_episode_steps=50
 )
+
+register(id='LocoBotReach-v3',
+         entry_point='pyrobot_gym.tasks:LocoBotReachEnv',
+         #kwargs=kwargs,
+         max_episode_steps=50
+)
