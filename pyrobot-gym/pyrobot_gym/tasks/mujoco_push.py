@@ -2,12 +2,13 @@ import os
 from gym import utils
 from gym import error, spaces
 import numpy as np
-#from gym_pyrobot.envs.pyrobot_core_env import PyRobotCoreEnv
 from pyrobot_gym.robots import LocoBotMujocoEnv
+from pyrobot_gym.core import rotations
+
 # Load the simulation environment XML
 pwd = os.path.dirname(os.path.realpath(__file__))
 #MODEL_XML_PATH = os.path.join(pwd, 'assets', 'locobot', 'reach.xml')
-MODEL_XML_PATH = os.path.abspath(os.path.join(pwd, os.pardir, 'assets', 'tasks', 'reach.xml'))
+MODEL_XML_PATH = os.path.abspath(os.path.join(pwd, os.pardir, 'assets', 'tasks', 'push.xml'))
 # DEBUG:
 print("path = {}".format(MODEL_XML_PATH))
 
@@ -21,35 +22,34 @@ BOUNDS_RIGHTWALL = -.45
 BOUNDS_FRONTWALL = .5
 BOUNDS_BACKWALL = -.13
 
-
-class LocoBotMujocoReachEnv(LocoBotMujocoEnv, utils.EzPickle):
+class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
     def __init__(self,
                  reward_type='sparse',
                  n_actions=4,
-                 has_object=False,
+                 has_object=True,
                  block_gripper=True,
                  n_substeps=20,
-                 gripper_extra_height=0.2,
-                 target_in_the_air=True,
+                 gripper_extra_height=0.0,
+                 target_in_the_air=False,
                  target_offset=0.0,
-                 obj_range=0.15,
-                 target_range=0.15,
+                 obj_range=0.2,
+                 target_range=0.2,
                  distance_threshold=0.05):
         print("[LocoBotMujocoReachEnv] START init LocoBotMujocoReachEnv")
         # Load as the Environment Parameters
         self.get_params(reward_type, n_actions, has_object, block_gripper, n_substeps, gripper_extra_height,
-                        target_in_the_air, target_offset, obj_range, target_range, distance_threshold)
+                    target_in_the_air, target_offset, obj_range, target_range, distance_threshold)
         # Set the Environment Parameters
         LocoBotMujocoEnv.__init__(
             self,MODEL_XML_PATH,
-            has_object=False,
+            has_object=True,
             block_gripper=True,
             n_substeps=20,
-            gripper_extra_height=0.2,
-            target_in_the_air=True,
+            gripper_extra_height=0.0,
+            target_in_the_air=False,
             target_offset=0.0,
-            obj_range=0.15,
-            target_range=0.25,
+            obj_range=0.2,
+            target_range=0.2,
             distance_threshold=0.05,
             initial_qpos=self.initial_qpos,
             reward_type=self.reward_type,
@@ -75,7 +75,8 @@ class LocoBotMujocoReachEnv(LocoBotMujocoEnv, utils.EzPickle):
             'joint_2': 6.71766300e-03,
             'joint_3': 7.30874027e-03,
             'joint_4': 3.80183559e-03,
-            'joint_5': -5.06792684e-05
+            'joint_5': -5.06792684e-05,
+            'object0:joint': [1.25, 0.53, 0.025, 1., 0., 0., 0.],
         }
         # initial goal = startup end effector position
         self.initial_gripper_xpos = np.array([4.11812983e-01, 9.47465341e-05, 4.04977648e-01])
@@ -94,12 +95,15 @@ class LocoBotMujocoReachEnv(LocoBotMujocoEnv, utils.EzPickle):
         self.use_random_goal = True
         self.last_joint_positions = None
         self.last_gripper_xpos = None
+        self.last_object_position = None
         self.valid_move = True
+        self.height_offset = 0.0
 
     def _set_init_pose(self):
         """
         1.Sets the Robot to its startup initial position whenever RESET
-        2. Sample a goal
+        2. Randomize starting position of the object
+        3. Sample a goal
         """
         # Setup the initial [x,y,z]position and joint positions
         for name, value in self.initial_qpos.items():
@@ -109,17 +113,31 @@ class LocoBotMujocoReachEnv(LocoBotMujocoEnv, utils.EzPickle):
         self.initial_gripper_xpos = self.sim.data.get_site_xpos('robot0:end_effector').copy() - robot_pos
         print('[RESET] initial_gripper_xpos = {}'.format(self.initial_gripper_xpos))
 
+        # Randomize the starting position of the object
+        object_xpos = self.initial_gripper_xpos[:2]
+        while np.linalg.norm(object_xpos - self.initial_gripper_xpos[:2]) < 0.1:
+            object_xpos  = self.initial_gripper_xpos[:2] + self.np_random.uniform(-self.obj_range, 0, size=2)
+        object_qpos = self.sim.data.get_joint_qpos('object0:joint')
+        assert object_qpos.shape == (7,)
+        object_qpos[:2] = object_xpos + robot_pos[:2]
+        self.sim.data.set_joint_qpos('object0:joint', object_qpos)
+        self.sim.forward()
+        self.last_object_position = self.sim.data.get_site_xpos('object0') - robot_pos
+        print('[RESET] Object Position = {}'.format(self.last_object_position))
+
         # Sample a goal
         if self.use_random_goal:
             print("SAMPLING a new DESIRED GOAL Position")
-            self.goal = self._sample_goal(self.initial_gripper_xpos)
+            self.goal = self._sample_goal(self.last_object_position)
         else:
             self.goal = np.array([0.32126746, -0.03747156, 0.26531804])
 
-        # Record the joint pos and end effector pos right after the reset
-        self.last_gripper_xpos = self.sim.data.get_site_xpos('robot0:end_effector') - robot_pos
+        #Record the joint pos and end effector pos right after the reset
+        self.last_gripper_xpos = self.sim.data.get_site_xpos('robot0:end_effector').copy()- robot_pos
         self.last_joint_positions, _ = self.get_joints_position(self.sim)
         print('[RESET] Initial Joint Position = {}'.format(self.last_joint_positions))
+
+
 
     def _set_action(self, action):
         """
@@ -138,22 +156,53 @@ class LocoBotMujocoReachEnv(LocoBotMujocoEnv, utils.EzPickle):
         - relative displacement from end-effoctor to desired goal position
         - joint positions
         """
-        robot_pos = np.array([0.4049, 0.48, 0])
+        # dt
+        dt = self.sim.nsubsteps * self.sim.model.opt.timestep
+        # Robot position offset
+        #robot_pos = np.array([0.4049, 0.48, 0])
+        robot_pos = self.sim.data.get_site_xpos('robot0:base')
+        # End Effector position relative to the robot's base frame
         eff_pos = self.sim.data.get_site_xpos('robot0:end_effector') - robot_pos
-        relative_dis_ee_goal = np.array([self.goal_distance(self.goal, eff_pos)])
-        joint_positions, _ = self.get_joints_position(self.sim)
-        print('[Get Obs] effpos = {}'.format(eff_pos))
+        # End Effector Positional Velocity
+        eff_velp = self.sim.data.get_site_xvelp('robot0:end_effector') * dt
+        #relative_dis_ee_goal = np.array([self.goal_distance(self.goal, eff_pos)])
+        # Joints Position and Velocities
+        joint_positions, joint_velocities = self.get_joints_position(self.sim)
+
+        # Target Object
+        # Object Position relative to the robot's base frame
+        object_pos = self.sim.data.get_site_xpos('object0') - robot_pos
+        object_rot = rotations.mat2euler(self.sim.data.get_site_xmat('object0'))
+        object_velp = self.sim.data.get_site_xvelp('object0') * dt
+        object_velr = self.sim.data.get_site_xvelr('object0') * dt
+        # Object position&velocity relative to the gripper
+        object_rel_pos = object_pos - eff_pos
+        object_rel_velp = object_velp - eff_velp
+
+        # DEBUG:
+        print('base_location = {}'.format(robot_pos))
+        print('[Get Obs] eff_pos = {}'.format(eff_pos))
+        print('[Get Obs] eff_velp = {}'.format(eff_velp))
         print('[Get Obs] goal = {}'.format(self.goal))
-        print('[Get Obs] distance = {}'.format(relative_dis_ee_goal))
         print('[Get Obs] joint_pos = {}'.format(joint_positions))
+        print('[Get Obs] object_pos = {}'.format(object_pos))
         self.last_joint_positions = joint_positions
         obs = np.concatenate([eff_pos,
-                              relative_dis_ee_goal,
-                              joint_positions])
-        return {'observation': obs.copy(),
-                    'achieved_goal': eff_pos.copy(),
-                    'desired_goal': self.goal.copy()}
+                              eff_velp,
+                              joint_positions,
+                              joint_velocities,
+                              object_pos.ravel(),
+                              object_rel_pos.ravel(),
+                              object_rel_velp.ravel(),
+                              object_rot.ravel(),
+                              object_velr.ravel()])
 
+        # Current object position
+        achieved_goal = np.squeeze(object_pos.copy())
+
+        return {'observation': obs.copy(),
+                'achieved_goal': achieved_goal.copy(),
+                'desired_goal': self.goal.copy()}
 
     def _is_success(self, achieved_goal, desired_goal):
         """
@@ -165,46 +214,30 @@ class LocoBotMujocoReachEnv(LocoBotMujocoEnv, utils.EzPickle):
             d = self.goal_distance(achieved_goal, desired_goal)
             return (d < self.distance_threshold).astype(np.float32)
         else:
-            print("[Is Success] Action is not feasible!")
-            return np.float32(0.0)
-
+            print("[Is Success] Action is not feasible")
+            return np.float(0.0)
 
     def compute_reward(self, achieved_goal, goal, info):
-        # Compute distance between goal and the achieved goal.
-        if achieved_goal.size != 3:  # if calculating the batch reward
-            self.valid_move = True
         d = self.goal_distance(achieved_goal, goal)
         if self.valid_move:
             if self.reward_type == "sparse":
                 return -(d > self.distance_threshold).astype(np.float32) # Not achieved : -1 | Achieved : 0
-            else: # Not binary/sparse reward, reward = -(goal_distance)
+            else:
                 return -d
         else:
-            return np.float32(-1.0)
+            return np.float32(-1.0)  # Reward = -1 if the action is not valid
 
     def goal_distance(self, goal_a, goal_b):
         assert goal_a.shape == goal_b.shape
         return np.linalg.norm(goal_a - goal_b, axis=-1)
 
-    def _sample_goal(self, initial_ee_pos):
-
-        sample_goal = True
-        while sample_goal == True:
-            #goal = np.array([0.74780095, 0.40455716, 0.28715335]) + self.np_random.uniform(-self.target_range, self.target_range, size=3)
-            goal = initial_ee_pos + self.np_random.uniform(-self.target_range, self.target_range, size=3)
-            conditions = [goal[0] <= BOUNDS_FRONTWALL, goal[0] >= BOUNDS_BACKWALL,
-                          goal[1] <= BOUNDS_LEFTWALL, goal[1] >= BOUNDS_RIGHTWALL,
-                          goal[2] <= BOUNDS_CEILLING, goal[2] >= BOUNDS_FLOOR]
-            violated_boundary = False
-            for condition in conditions:
-                if not condition:
-                    violated_boundary = True
-                    break
-            if violated_boundary == True:
-                print('[Sample Goal] Sampled Goal Exists Boundaries --> Need to resample a valid goal')
-                sample_goal = True
-            else:
-                sample_goal = False
+    def _sample_goal(self, object_position):
+        """
+        Goal Position of the object being pushed
+        """
+        goal = object_position + self.np_random.uniform(-self.target_range, self.target_range, size=3)
+        goal += self.target_offset
+        goal[2] = self.height_offset  # Object goal is on the ground
         # end loop
-        print('[Sample Goal] Sampled Goal = {}'.format(goal))
+        print('[Sample Goal] Sampled Goal Position for the object = {}'.format(goal))
         return goal.copy()

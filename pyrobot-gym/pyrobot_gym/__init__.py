@@ -24,3 +24,9 @@ register(id='LocoBotReach-v3',
          #kwargs=kwargs,
          max_episode_steps=50
 )
+
+register(id='LocoBotPush-v1',
+         entry_point='pyrobot_gym.tasks:LocoBotMujocoPushEnv',
+         #kwargs=kwargs,
+         max_episode_steps=50
+)
