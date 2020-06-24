@@ -60,6 +60,11 @@ class LocoBotMujocoEnv(robot_mujoco_env.RobotMujocoEnv):
         result = utils.ctrl_set_action(self.sim, action)
         return result
 
+    def close_gripper(self):
+        self.sim.data.set_joint_qpos('joint_6', 0.)
+        self.sim.data.set_joint_qpos('joint_7', 0.)
+        self.sim.forward()
+
     def get_joints_position(self, sim):
         """Returns all joint positions and velocities associated with
         a robot.
@@ -111,7 +116,7 @@ class LocoBotMujocoEnv(robot_mujoco_env.RobotMujocoEnv):
         #print('sites_offset = {}'.format(sites_offset))
         site_id = self.sim.model.site_name2id('target0')
         #self.sim.model.site_pos[site_id] = self.goal - sites_offset[0]
-        self.sim.model.site_pos[site_id] = self.goal
+        self.sim.model.site_pos[site_id] = np.array([0.4049, 0.48, 0]) + self.goal
         #self.sim.model.site_pos[site_id] = self.goal
         #print('goal = {}'.format(self.goal))
         #print('sim.model.site_pos[site_id] = {}'.format(self.sim.model.site_pos[site_id]))

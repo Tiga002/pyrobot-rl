@@ -10,7 +10,7 @@ locobot: #namespace
     position_ee_max: 1.0
     position_ee_min: -1.0
     threshold_error: 0.05
-    use_random_goal: False
+    use_random_goal: True
     random_target_range: 0.25
 
     initial_joint_pos: # This has to be validated in the fetch_moveit_test.py in fetch_openai_ros_example or something that tests this pos is possible

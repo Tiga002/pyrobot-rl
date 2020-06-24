@@ -15,12 +15,10 @@ print("path = {}".format(MODEL_XML_PATH))
 """
 Boundaries of the Configuration Space
 """
-BOUNDS_CEILLING = .45
-BOUNDS_FLOOR = .15
-BOUNDS_LEFTWALL = .45
-BOUNDS_RIGHTWALL = -.45
-BOUNDS_FRONTWALL = .5
-BOUNDS_BACKWALL = -.13
+GOAL_LEFTWALL = .45
+GOAL_RIGHTWALL = -.45
+GOAL_FRONTWALL = .5
+GOAL_BACKWALL = .25
 
 class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
     def __init__(self,
@@ -68,8 +66,8 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
     def get_params(self,reward_type, n_actions, has_object, block_gripper, n_substeps, gripper_extra_height,
                     target_in_the_air, target_offset, obj_range, target_range, distance_threshold):
         self.initial_qpos = {
-            'robot0:slide0': 0.,
-            'robot0:slide1': 0.,
+            'robot0:slide0': 0.4049,
+            'robot0:slide1': 0.48,
             'robot0:slide2': 0.0,
             'joint_1': -1.22487753e-05,
             'joint_2': 6.71766300e-03,
@@ -115,8 +113,24 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
 
         # Randomize the starting position of the object
         object_xpos = self.initial_gripper_xpos[:2]
-        while np.linalg.norm(object_xpos - self.initial_gripper_xpos[:2]) < 0.1:
-            object_xpos  = self.initial_gripper_xpos[:2] + self.np_random.uniform(-self.obj_range, 0, size=2)
+        sample_position = True
+        while sample_position == True:
+            object_xpos  = self.initial_gripper_xpos[:2] + self.np_random.uniform(-self.obj_range, self.obj_range, size=2)
+            conditions = [object_xpos[0] <= GOAL_FRONTWALL, object_xpos[0] >= GOAL_BACKWALL,
+                          object_xpos[1] <= GOAL_LEFTWALL, object_xpos[1] >= GOAL_RIGHTWALL]
+            violated_boundary = False
+            for condition in conditions:
+                if not condition:
+                    violated_boundary = True
+                    break
+            if violated_boundary == True:
+                print('[Sample Object Position] Object Position exceeds Configuration space --> Need to resample')
+                sample_position = True
+            elif np.linalg.norm(object_xpos - self.initial_gripper_xpos[:2]) < 0.1:
+                print('[Sample Object Position] Need to resample')
+                sample_position = True
+            else:
+                sample_position = False
         object_qpos = self.sim.data.get_joint_qpos('object0:joint')
         assert object_qpos.shape == (7,)
         object_qpos[:2] = object_xpos + robot_pos[:2]
@@ -148,6 +162,10 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
         action = action*0.25 # restrict the action
         print('[Set Action] Action = {}'.format(action))
         self.valid_move = self.set_joints_position(action)
+        self.sim.data.set_joint_qpos('joint_6', 0)
+        self.sim.data.set_joint_qpos('joint_7', 0)
+        self.sim.forward()
+
 
     def _get_obs(self):
         """

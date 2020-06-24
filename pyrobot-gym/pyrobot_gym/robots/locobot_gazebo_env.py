@@ -209,7 +209,7 @@ class LocoBotGazeboEnv(robot_gazebo_env.RobotGazeboEnv):
             else:
                 rospy.logdebug('Desired gripper place within the configuration space Boundaries')
                 result = self.robot.gripper.close()
-                result = self.robot.arm.set_joint_positions(positions_array, plan=False)
+                result = self.robot.arm.set_joint_positions(positions_array, plan=True)
         #time.sleep(1)
         # Only in play
         #if result == False:

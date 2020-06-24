@@ -80,12 +80,12 @@
               <body childclass="robot0:locobotGripper" name="finger_r" pos="0.07285 0 0.0050143">
                 <inertial pos="0.0100191 -0.00843835 -0.0048328" quat="0.475246 0.475678 0.523898 0.522879" mass="0.0121931" diaginertia="3.13241e-06 2.77936e-06 6.51268e-07" />
                 <joint name="joint_6" pos="0 0 0" axis="0 1 0" type="slide" limited="true" range="-1 0" />
-                <geom type="mesh" contype="0" conaffinity="0" group="1" mesh="finger_r" material="finger_r" class="robot0:red" />
+                <geom type="mesh" condim="3" group="1" mesh="finger_r" material="finger_r" class="robot0:red" />
               </body>  <!--finger_r-->
               <body childclass="robot0:locobotGripper" name="finger_l" pos="0.07285 0 0.0050143">
                 <inertial pos="0.0100192 0.00643833 -0.0048328" quat="0.522879 0.523899 0.475677 0.475246" mass="0.0121931" diaginertia="3.13241e-06 2.77936e-06 6.51268e-07" />
                 <joint name="joint_7" pos="0 0 0" axis="0 1 0" type="slide" limited="true" range="0 1" />
-                <geom type="mesh" contype="0" conaffinity="0" group="1" mesh="finger_l"  material="finger_r" class="robot0:red" />
+                <geom type="mesh" condim="3" group="1" mesh="finger_l"  material="finger_r" class="robot0:red" />
               </body>  <!-- finger_l-->
               <site name="robot0:end_effector" pos="0.05 0 0" rgba="1 0 0 1" size="0.02 0.02 0.02"></site>
               <!-- <site name="robot0:grip" pos="0.02 0 0" rgba="0 0 0 0" sizes="0.02 0.02 0.02"></site> -->
