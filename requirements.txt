@@ -4,7 +4,6 @@ astor==0.8.1
 attrs==19.3.0
 Babel==2.8.0
 backcall==0.1.0
--e git+https://github.com/openai/baselines.git@ea25b9e8b234e6ee1bca43083f8f3cf974143998#egg=baselines
 bezier==2020.5.19
 bleach==3.1.5
 catkin-pkg==0.4.20
@@ -90,7 +89,6 @@ pyparsing==2.4.6
 PyQt5==5.15.0
 PyQt5-sip==12.8.0
 -e git+https://github.com/facebookresearch/pyrobot.git@5f2bc2e301ba41dcebbea86f2a35600550d991db#egg=pyrobot
--e git+https://github.com/Tiga002/pyrobot-reinforcement-learning.git@034d9135fecf1e2dcaa9eced8d66c95d0c24df9f#egg=pyrobot_gym&subdirectory=pyrobot-gym
 pyrsistent==0.16.0
 pytest==5.4.1
 pytest-cov==2.6.1
