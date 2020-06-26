@@ -17,8 +17,8 @@ Boundaries of the Configuration Space
 """
 GOAL_LEFTWALL = .45
 GOAL_RIGHTWALL = -.45
-GOAL_FRONTWALL = .5
-GOAL_BACKWALL = .25
+GOAL_FRONTWALL = .4
+GOAL_BACKWALL = .2
 
 class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
     def __init__(self,
@@ -31,7 +31,7 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
                  target_in_the_air=False,
                  target_offset=0.0,
                  obj_range=0.2,
-                 target_range=0.2,
+                 target_range=0.20,
                  distance_threshold=0.05):
         print("[LocoBotMujocoReachEnv] START init LocoBotMujocoReachEnv")
         # Load as the Environment Parameters
@@ -47,7 +47,7 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
             target_in_the_air=False,
             target_offset=0.0,
             obj_range=0.2,
-            target_range=0.2,
+            target_range=0.20,
             distance_threshold=0.05,
             initial_qpos=self.initial_qpos,
             reward_type=self.reward_type,
@@ -133,6 +133,7 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
                 sample_position = False
         object_qpos = self.sim.data.get_joint_qpos('object0:joint')
         assert object_qpos.shape == (7,)
+        #object_xpos = np.array([0.33662441, -0.11767662])
         object_qpos[:2] = object_xpos + robot_pos[:2]
         self.sim.data.set_joint_qpos('object0:joint', object_qpos)
         self.sim.forward()
@@ -144,7 +145,7 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
             print("SAMPLING a new DESIRED GOAL Position")
             self.goal = self._sample_goal(self.last_object_position)
         else:
-            self.goal = np.array([0.32126746, -0.03747156, 0.26531804])
+            self.goal = np.array([0.34242378, -0.19046866, 0.])
 
         #Record the joint pos and end effector pos right after the reset
         self.last_gripper_xpos = self.sim.data.get_site_xpos('robot0:end_effector').copy()- robot_pos
@@ -253,9 +254,22 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
         """
         Goal Position of the object being pushed
         """
-        goal = object_position + self.np_random.uniform(-self.target_range, self.target_range, size=3)
-        goal += self.target_offset
-        goal[2] = self.height_offset  # Object goal is on the ground
-        # end loop
+        sample_goal = True
+        while sample_goal == True:
+            goal = object_position + self.np_random.uniform(-self.target_range, self.target_range, size=3)
+            goal += self.target_offset
+            goal[2] = self.height_offset  # Object goal is on the ground
+            conditions = [goal[0] <= GOAL_FRONTWALL, goal[0] >= GOAL_BACKWALL,
+                          goal[1] <= GOAL_LEFTWALL, goal[1] >= GOAL_RIGHTWALL]
+            violated_boundary = False
+            for condition in conditions:
+                if not condition:
+                    violated_boundary = True
+                    break
+            if violated_boundary == True:
+                sample_goal = True
+            else:
+                sample_goal = False
+            # end loop
         print('[Sample Goal] Sampled Goal Position for the object = {}'.format(goal))
         return goal.copy()
