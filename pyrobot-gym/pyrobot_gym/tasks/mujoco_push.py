@@ -15,10 +15,10 @@ print("path = {}".format(MODEL_XML_PATH))
 """
 Boundaries of the Configuration Space
 """
-GOAL_LEFTWALL = .45
-GOAL_RIGHTWALL = -.45
-GOAL_FRONTWALL = .4
-GOAL_BACKWALL = .2
+GOAL_LEFTWALL = .35
+GOAL_RIGHTWALL = -.35
+GOAL_FRONTWALL = .35
+GOAL_BACKWALL = .25
 
 class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
     def __init__(self,
@@ -31,7 +31,7 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
                  target_in_the_air=False,
                  target_offset=0.0,
                  obj_range=0.2,
-                 target_range=0.20,
+                 target_range=0.2,
                  distance_threshold=0.05):
         print("[LocoBotMujocoReachEnv] START init LocoBotMujocoReachEnv")
         # Load as the Environment Parameters
@@ -47,7 +47,7 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
             target_in_the_air=False,
             target_offset=0.0,
             obj_range=0.2,
-            target_range=0.20,
+            target_range=0.2,
             distance_threshold=0.05,
             initial_qpos=self.initial_qpos,
             reward_type=self.reward_type,
