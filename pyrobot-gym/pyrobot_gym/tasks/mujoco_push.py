@@ -31,7 +31,7 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
                  target_in_the_air=False,
                  target_offset=0.0,
                  obj_range=0.2,
-                 target_range=0.2,
+                 target_range=0.15,
                  distance_threshold=0.05):
         print("[LocoBotMujocoReachEnv] START init LocoBotMujocoReachEnv")
         # Load as the Environment Parameters
@@ -47,7 +47,7 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
             target_in_the_air=False,
             target_offset=0.0,
             obj_range=0.2,
-            target_range=0.2,
+            target_range=0.15,
             distance_threshold=0.05,
             initial_qpos=self.initial_qpos,
             reward_type=self.reward_type,
@@ -267,6 +267,8 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
                     violated_boundary = True
                     break
             if violated_boundary == True:
+                sample_goal = True
+            elif np.linalg.norm(object_position[:2] - goal[:2]) < 0.05:
                 sample_goal = True
             else:
                 sample_goal = False

@@ -30,3 +30,9 @@ register(id='LocoBotPush-v1',
          #kwargs=kwargs,
          max_episode_steps=50
 )
+
+register(id='LocoBotPush-v2',
+         entry_point='pyrobot_gym.tasks:LocoBotGazeboPushEnv',
+         #kwargs=kwargs,
+         max_episode_steps=50
+)

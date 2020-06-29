@@ -18,7 +18,7 @@ import tf
 Boundaries of the Configuration Space
 """
 BOUNDS_CEILLING = .45
-BOUNDS_FLOOR = .15
+BOUNDS_FLOOR = .08
 BOUNDS_LEFTWALL = .45
 BOUNDS_RIGHTWALL = -.45
 BOUNDS_FRONTWALL = .5
@@ -56,6 +56,7 @@ class LocoBotGazeboEnv(robot_gazebo_env.RobotGazeboEnv):
 
         rospy.logdebug("Goint to create a PyRobot Instance")
         self.robot = Robot('locobot')
+        print("ABCBSDASKDJASDLKASJDALKSDJALSKDJALSKDJASKDJASLDKAJSDLKASJDLAKSDJALSKDJ")
         rospy.logdebug("PyRobot Instance created")
 
         # We start all the ROS related Subscriber and Publishers
@@ -209,7 +210,7 @@ class LocoBotGazeboEnv(robot_gazebo_env.RobotGazeboEnv):
             else:
                 rospy.logdebug('Desired gripper place within the configuration space Boundaries')
                 result = self.robot.gripper.close()
-                result = self.robot.arm.set_joint_positions(positions_array, plan=True)
+                result = self.robot.arm.set_joint_positions(positions_array, plan=False)
         #time.sleep(1)
         # Only in play
         #if result == False:
@@ -271,6 +272,12 @@ class LocoBotGazeboEnv(robot_gazebo_env.RobotGazeboEnv):
         joint_positions = self.robot.arm.get_joint_angles()
         self.gazebo.pauseSim()
         return joint_positions
+
+    def get_joints_velocity(self):
+        self.gazebo.unpauseSim()
+        joint_velocities = self.robot.arm.get_joint_velocities()
+        self.gazebo.pauseSim()
+        return joint_velocities
 
     def get_end_effector_pose(self):
         """
@@ -370,32 +377,3 @@ class LocoBotGazeboEnv(robot_gazebo_env.RobotGazeboEnv):
         raise NotImplementedError()
 
 # ------------------------------
-
-class Object_Position(object):
-    """
-    This class maintains the pose and orientation of the cube in a simulation
-    through Gazebo Services
-    """
-
-    def __init__(self):
-        request_world_properties = rospy.ServiceProxy(
-            '/gazebo/get_world_properties', GetWorldProperties)()
-        self.time = 0
-        self.model_names = request_world_properties.model_names
-        self.get_model_state = rospy.ServiceProxy(
-            '/gazebo/get_model_state', GetModelState)
-
-    def get_states(self):
-        """
-        Return a ndarray of pose+rotation of the cube
-        """
-        for model_name in self.model_names:
-            if model_name == "cube":
-                # Call for the Service from our Service Proxy
-                data = self.get_model_state(model_name, "world")
-                return np.array([data.pose.position.x,
-                                 data.pose.position.y,
-                                 data.pose.position.z,
-                                 data.pose.orientation.x,
-                                 data.pose.orientation.y,
-                                 data.pose.orientation.z])
