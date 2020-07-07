@@ -10,7 +10,7 @@ locobot: #namespace
     position_ee_max: 1.0
     position_ee_min: -1.0
     threshold_error: 0.05
-    use_random_goal: True
+    use_random_goal: False
     random_target_range: 0.25
 
     initial_joint_pos: # This has to be validated in the fetch_moveit_test.py in fetch_openai_ros_example or something that tests this pos is possible
@@ -29,9 +29,9 @@ locobot: #namespace
       #x: 0.339
       #y: 0.0116
       #z: 0.255
-      x: 0.43936986
-      y: 0.13147816
-      z: 0.26567984
+      x: 0.33706762
+      y: 0.18828513
+      z: 0.0
 
     position_delta: 0.1 # Increments of Decrements in the X/Y/Z positions each action step
 

@@ -51,7 +51,7 @@ class LocoBotGazeboPushEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle):
 
         rospy.logdebug("Entered LocoBotGazeboReachEnv")
         self.get_params()
-
+        self.obj_positions = Object_Position()
         super(LocoBotGazeboPushEnv, self).__init__(ros_ws_abspath, ros_ws_src_path)
 
         # Define the action space here (since task specific)
@@ -102,7 +102,7 @@ class LocoBotGazeboPushEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle):
         self.last_joint_positions = None
         self.last_gripper_target = None
 
-        self.obj_positions = Object_Position()
+        #self.obj_positions = Object_Position()
         self.previous_end_effector_postion = np.zeros(3)
         self.previous_object_position = np.zeros(3)
         self.previous_object_rotation = np.zeros(3)
@@ -135,7 +135,7 @@ class LocoBotGazeboPushEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle):
         # Samle a Goal or Not
         if self.use_random_goal:
             rospy.logdebug("SAMPLING a new DESIRED GOAL Position")
-            self.desired_position = self._sample_goal(self.last_gripper_target)
+            self.desired_position = self._sample_goal(self.previous_object_position)
 
 
         self.last_action= "INIT"
@@ -197,6 +197,7 @@ class LocoBotGazeboPushEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle):
         # Object Information
         object_data = self.obj_positions.get_states()
         object_pos = object_data[:3]
+        self.previous_object_position = object_pos
         object_rot = object_data[3:]
         object_velp = (object_pos - self.previous_object_position)/dt
         object_velr = (object_rot - self.previous_object_rotation)/dt
