@@ -40,6 +40,8 @@ def ctrl_set_action(sim, action):
             else:
                 idx = sim.model.jnt_qposadr[sim.model.actuator_trnid[i, 0]]
                 sim.data.ctrl[i] = sim.data.qpos[idx] + action[i]
+                # For showing difference:
+                #sim.data.ctrl[i] = action[i]
                 sim.data.ctrl[i] = np.clip(sim.data.ctrl[i], -1.25, 1.25)
 
                 #0.408, 0.721, -0.471, -1.4, 0.920

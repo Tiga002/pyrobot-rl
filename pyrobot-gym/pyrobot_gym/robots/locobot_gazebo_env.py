@@ -171,7 +171,6 @@ class LocoBotGazeboEnv(robot_gazebo_env.RobotGazeboEnv):
         positions_array[2] = joint_positions[2]
         positions_array[3] = joint_positions[3]
         positions_array[4] = joint_positions[4]
-
         # Check #1
         # Check is it within the joint limits
         conditions = [positions_array[0] <= JOINT_1_LIMIT, positions_array[0] >= -JOINT_1_LIMIT,
@@ -216,7 +215,10 @@ class LocoBotGazeboEnv(robot_gazebo_env.RobotGazeboEnv):
         #if result == False:
         #    self.robot.arm.go_home()
         #    rospy.logdebug('Reset back to the startup position and start again ~~~')
-
+        """For showing difference
+        result = self.robot.gripper.close()
+        result = self.robot.arm.set_joint_positions(positions_array, plan=False)
+        """
         return result
 
     def set_trajectory_initial_joints(self, initial_qpos):

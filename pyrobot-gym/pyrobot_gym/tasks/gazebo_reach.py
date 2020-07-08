@@ -156,6 +156,14 @@ class LocoBotGazeboReachEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle)
         cur_joint_pos = np.array(cur_joint_pos)
         for i in range(5):
             cur_joint_pos[i] = np.clip(cur_joint_pos[i], -1.25, 1.25)
+        """ For Showing difference
+        cur_joint_pos = self.last_joint_positions
+        cur_joint_pos[0] = action[0]
+        cur_joint_pos[1] = action[1]
+        cur_joint_pos[2] = action[2]
+        cur_joint_pos[3] = action[3]
+        cur_joint_pos[4] = 0.0
+        """
         # Apply action to simulation
         self.movement_result = self.set_trajectory_joints(cur_joint_pos)
         if self.movement_result:
