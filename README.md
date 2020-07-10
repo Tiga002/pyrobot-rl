@@ -24,3 +24,11 @@ cd ../baselines/baselines
 python -m run --env=LocoBotPush-v1 --alg=her --num_timesteps=10000 --play 
 
 ```
+
+Dynamics Randomization is not yet merged into /baselines. It is developed separately in src/dynamics_randomization.
+Apart from that, the environment(mujoco) is still using the one in pyrobot-gym/pyrobot_gym.
+To run the code for dynamics randomization, just hit the following command:
+```scripts
+cd src/dynamics_randomization
+python main.py
+```
