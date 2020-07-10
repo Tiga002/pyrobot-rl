@@ -50,7 +50,7 @@
     <!-- Shoulder Link -->
     <body name="shoulder_link" pos="0.0973 0 0.1682"> <!--  quat="0.70709 0.70709 0.00489782 -0.00489782" -->
       <inertial pos="-5.67969e-05 1.09785e-10 0.0228467" quat="0.70709 0.70709 0.00489782 -0.00489782" mass="0.119861" diaginertia="0.00016129 0.000150799 5.49697e-05" />
-      <joint name="joint_1" pos="0 0 0" axis="0 0 1" limited="true" range="-1.57 1.57" />
+      <joint name="joint_1" pos="0 0 0" axis="0 0 1" damping="50" limited="true" range="-1.57 1.57" />
       <geom type="mesh" contype="0" conaffinity="0" group="1" mesh="shoulder_link" material="shoulder_link" class="robot0:orange" />
       <!-- Elbow Link -->
       <body name="elbow_link" pos="0 0 0.04125">

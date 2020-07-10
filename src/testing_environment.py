@@ -10,22 +10,92 @@ observation = []
 in0fos = []
 
 def main():
-    env = gym.make('LocoBotPush-v1')
+    env = gym.make('LocoBotReach-v1')
     #env = gym.make('FetchReach-v1')
     numItr = 100
     initStateSpace = "random"
     env.reset()
     print("Reset!")
+    val = env.get_property('arm:joint_1', 'actuator_gainprm')
+    print('val = {}'.format(val))
+    val[0] = val[0] * 2
+    print('val = {}'.format(val))
+    env.set_property('arm:joint_1', 'actuator_gainprm', val)
+    #val = env.get_property('shoulder_link', 'body_mass')
+    print('val = {}'.format(val))
+    """
+    obj_name = 'arm:joint_2'
+    prop_name = 'actuator_gainprm'
+    which_property = 'controller_gain'
+    if which_property == 'body_mass':
+        id = env.sim.model.body_name2id(obj_name)
+    elif which_property == 'joint_damping':
+        id = env.sim.model.joint_name2id(obj_name)
+    elif which_property == 'controller_gain':
+        id = env.sim.model.actuator_name2id(obj_name)
+    else:
+        id = None
+    print('id = {}'.format(id))
+    prop_all = getattr(env.sim.model, prop_name)
+    val = prop_all[id]
+    print("val = {}".format(val))
+
+    obj_id = {}
+    try:
+        obj_id['body_id'] = env.sim.model.body_name2id(obj_name)
+    except:
+        print('Exception1')
+        pass
+
+    try:
+        obj_id['geom_id'] = env.sim.model.geom_name2id(obj_name)
+    except:
+        print('Exception2')
+        pass
+
+    try:
+        obj_id['joint_id'] = env.sim.model.joint_name2id(obj_name)
+    except:
+        print('Exception3')
+        pass
+
+    try:
+        obj_id['actuator_id'] = env.sim.model.actuator_name2id(obj_name)
+    except:
+        print('Exception4')
+        pass
+
+    print("obj_id = {}".format(obj_id))
+    object_type = prop_name.split('_')[0]
+    print("object_type = {}".format(object_type))
+    object_type_id = object_type + '_id'
+    #object_type_id = 'body_id'
+    print("object_type_id = {}".format(object_type_id))
+
+    #prop_id = obj_id['joint_id']
+    prop_id = obj_id[object_type_id]
+    print("prop_id = {}".format(prop_id))
+    prop_all = getattr(env.sim.model, prop_name)
+    val = prop_all[prop_id]
+    print("val = {}".format(val))
+    """
+    env.render()
+    while(1 > 0):
+        env.render()
+
+    """
     while len(actions) < numItr:
-        obs = env.reset()
+        #obs = env.reset()
         #print("ITERATION NUMBER ", len(actions))
         env.render()
+        #self._env.set_property('object0', 'geom_friction', [pick, 0.005, .0001])
+        #env.get_property('shoulder_link', )
         #print('env.action_space = {}'.format(env.action_space))i
         #action = env.action_space.sample()
         #action = np.array([0.02, -0.9, 0.023, 0., 0.])
         #print('===== Action = {}'.format(action))
         #obs = env.step(action)
-
+"""
 #        reachToGoal(env, obs)
 
 def reachToGoal(env, lastObs):

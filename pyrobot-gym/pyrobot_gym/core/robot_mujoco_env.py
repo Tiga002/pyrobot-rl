@@ -3,6 +3,8 @@ import copy
 import numpy as np
 import gym
 from gym.utils import seeding
+from random import seed as random_seed
+from random import randint
 
 try:
     import mujoco_py
@@ -12,7 +14,7 @@ except ImportError as e:
 DEFAULT_SIZE = 500
 
 class RobotMujocoEnv(gym.GoalEnv):
-    def __init__(self, model_path, initial_qpos, n_actions, n_substeps):
+    def __init__(self, model_path, initial_qpos, n_actions, n_substeps,randomize_action_timesteps):
         print("[RobotMujocoEnv] START init RobotMujocoEnv")
         if model_path.startswith('/'):
             fullpath = model_path
@@ -22,10 +24,10 @@ class RobotMujocoEnv(gym.GoalEnv):
             raise IOError('File {} does not exist'.format(fullpath))
 
         model = mujoco_py.load_model_from_path(fullpath)
-        self.sim = mujoco_py.MjSim(model, nsubsteps=n_substeps)
+        self.sim = mujoco_py.MjSim(model, nsubsteps=1)
         self.viewer = None
         self._viewers = {}
-
+        self.randomize_action_timesteps = randomize_action_timesteps
         self.metadata = {
             'render.modes': ['human', 'rgb_array'],
             'video.frames_per_second': int(np.round(1.0 / self.dt))
@@ -53,6 +55,10 @@ class RobotMujocoEnv(gym.GoalEnv):
 
     # Env methods
     # ----------------------------
+    def do_simulation(self, action, n_frames):
+        self._set_action(action)
+        for _ in range(n_frames):
+            self.sim.step()
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -61,8 +67,12 @@ class RobotMujocoEnv(gym.GoalEnv):
     def step(self, action):
         # Normalize the action within (-1,1)
         action = np.clip(action, self.action_space.low, self.action_space.high)
-        self._set_action(action)
-        self.sim.step()
+        print('action = {}'.format(action))
+        n_frames = 20
+        if self.randomize_action_timesteps == True:
+            random_seed(1)
+            n_frames = n_frames + randint(0,1500)
+        self.do_simulation(action, n_frames)
         #self._step_callback()
         obs = self._get_obs()  # TODO: add real robot implementation
         done = False
@@ -111,6 +121,31 @@ class RobotMujocoEnv(gym.GoalEnv):
             self._viewers[mode] = self.viewer
         return self.viewer
 
+    ## Domain Randomization helper functions
+    def get_id(self, obj_name, prop_name):
+        if prop_name == 'body_mass':
+            id = self.sim.model.body_name2id(obj_name)
+        elif prop_name == 'dof_damping':
+            id = self.sim.model.joint_name2id(obj_name)
+        elif prop_name == 'geom_mass':
+            id = self.sim.model.geom_name2id(obj_name)
+        elif prop_name == 'actuator_gainprm':
+            id = self.sim.model.actuator_name2id(obj_name)
+        else:
+            id = None
+        return id
+
+    def set_property(self, obj_name, prop_name, prop_value):
+        id = self.get_id(obj_name, prop_name)
+        prop_all = getattr(self.sim.model, prop_name)
+        prop_all[id] = prop_value
+        prop_all = getattr(self.sim.model, prop_name)
+
+    def get_property(self, obj_name, prop_name):
+        id = self.get_id(obj_name, prop_name)
+        prop_all = getattr(self.sim.model, prop_name)
+        prop_val = prop_all[id]
+        return prop_val
     # Extension methods
     # ---------------------------
     def _reset_sim(self):

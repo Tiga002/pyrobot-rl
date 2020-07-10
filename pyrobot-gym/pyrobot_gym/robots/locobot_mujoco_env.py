@@ -28,7 +28,7 @@ class LocoBotMujocoEnv(robot_mujoco_env.RobotMujocoEnv):
     def __init__(
         self, model_path, n_substeps, gripper_extra_height, block_gripper,
         has_object, target_in_the_air, target_offset, obj_range, target_range,
-        distance_threshold, initial_qpos, reward_type,n_actions):
+        distance_threshold, initial_qpos, reward_type,n_actions,randomize_action_timesteps):
         """
         Initializes a new LocoBot environment
 
@@ -49,7 +49,7 @@ class LocoBotMujocoEnv(robot_mujoco_env.RobotMujocoEnv):
         # Initializes the SuperClass of RobotEnv
         super(LocoBotMujocoEnv, self).__init__(
             model_path=model_path, n_substeps=n_substeps, n_actions=5,
-            initial_qpos=initial_qpos)
+            initial_qpos=initial_qpos,randomize_action_timesteps=randomize_action_timesteps)
 
     # GoalEnv methods :: Define the Sparse/Binary or EuclideanDistance Reward
     # ----------------------------------

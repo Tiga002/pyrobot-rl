@@ -1,2 +1,13 @@
 # Ingore all pycache
 *.pyc
+src/dynamics_randomization/checkpoints
+src/dynamics_randomization/__pycache__
+src/dynamics_randomization/tf_logs
+src/dynamics_randomization/csv_log.csv
+src/using_gazebo_model
+src/using_mujoco_model
+src/__pycache__
+src/Comparison
+/venv_pyrobot_rl
+src/plot_test.py
+src/plotting/put_plot_together.py

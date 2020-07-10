@@ -51,7 +51,8 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
             distance_threshold=0.05,
             initial_qpos=self.initial_qpos,
             reward_type=self.reward_type,
-            n_actions=self.n_actions)
+            n_actions=self.n_actions,
+            randomize_action_timesteps=True)
         utils.EzPickle.__init__(self)
 
         # Setup the Observation Space and Action Space here
@@ -96,6 +97,7 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
         self.last_object_position = None
         self.valid_move = True
         self.height_offset = 0.0
+        self.randomize_action_timesteps=True
 
     def _set_init_pose(self):
         """
@@ -158,7 +160,7 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
         """
         Define the Action: 5 Joint Positions + (open/close gripper)
         """
-        assert action.shape == (4,)
+        #assert action.shape == (4,)
         action = action.copy()
         action = action*0.25 # restrict the action
         print('[Set Action] Action = {}'.format(action))

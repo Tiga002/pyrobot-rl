@@ -53,7 +53,8 @@ class LocoBotMujocoReachEnv(LocoBotMujocoEnv, utils.EzPickle):
             distance_threshold=0.05,
             initial_qpos=self.initial_qpos,
             reward_type=self.reward_type,
-            n_actions=self.n_actions)
+            n_actions=self.n_actions,
+            randomize_action_timesteps=True)
         utils.EzPickle.__init__(self)
 
         # Setup the Observation Space and Action Space here
@@ -95,6 +96,7 @@ class LocoBotMujocoReachEnv(LocoBotMujocoEnv, utils.EzPickle):
         self.last_joint_positions = None
         self.last_gripper_xpos = None
         self.valid_move = True
+        self.randomize_action_timesteps = True
 
     def _set_init_pose(self):
         """
