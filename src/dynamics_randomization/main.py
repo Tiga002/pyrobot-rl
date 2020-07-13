@@ -1,5 +1,6 @@
 import gym
 import random
+from numpy import random
 import gym
 import os
 import numpy as np
@@ -30,7 +31,7 @@ agent = Agent(experiment, BATCH_SIZE*MAX_STEPS)
 
 # Initialize the environment sampler
 randomized_environment = RandomizedEnvironment(experiment, [0.0, 1.0], [])
-
+#random_seed(123)
 # Initialize the experience replay buffer
 replay_buffer = ReplayBuffer(BUFFER_SIZE)
 
@@ -38,7 +39,7 @@ if not os.path.exists(directory):
     os.makedirs(directory)
 
 for ep in range(EPISODES):
-    print('================== Episode {} ==========================='.format(ep))
+    print('Episode: {}'.format(ep))
     # 1. Generate a environment with randomized parameters
     randomized_environment.sample_env()
     env, env_params = randomized_environment.get_env()
@@ -70,7 +71,6 @@ for ep in range(EPISODES):
         # Step the Environment
         action = [action_output[0][0], action_output[0][1], action_output[0][2], action_output[0][3]]
         new_obs_dict, step_reward, done, info = env.step(action)
-
         new_obs = new_obs_dict['observation']
         achieved_goal = new_obs_dict['achieved_goal']
         # Add the transition tuple to the episode saver
@@ -82,7 +82,9 @@ for ep in range(EPISODES):
     replay_buffer.add(episode)
 
     # Replay the experience replay buffer with H.E.R. with a probability k
-    if random.random() < K:
+    prob = random.rand()
+    if prob < K:
+        #print('Hindsight the replay buffer ~~')
         # replace the goal with the achieved goal
         new_goal = current_obs_dict['achieved_goal']
         # Create a new episode instance to hold the hindsight rollout
@@ -149,13 +151,14 @@ for ep in range(EPISODES):
         agent.train_actor(state_batch, goal_batch, history_batch, grads[0])
 
         # Update target networks
+        #print('Updating the networks')
         agent.update_target_actor()
         agent.update_target_critic()
 
     # perform policy evaluation
     if ep % TESTING_INTERVAL == 0 and ep != 0:
         success_number = 0
-        print('Performing policy evalution ~~~~')
+        print('============== Performing policy evalution ===================')
 
         for test_ep in range(TESTING_ROLLOUTS):
             randomized_environment.sample_env()
@@ -186,7 +189,6 @@ for ep in range(EPISODES):
                 action = agent.evaluate_actor(agent._actor.predict_target, obs, goal, history)
 
                 new_obs_dict, step_reward, done, info = env.step(action[0])
-
                 new_obs = new_obs_dict['observation']
                 achieved = new_obs_dict['achieved_goal']
 

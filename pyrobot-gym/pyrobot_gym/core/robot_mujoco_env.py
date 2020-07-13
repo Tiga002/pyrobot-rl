@@ -34,6 +34,7 @@ class RobotMujocoEnv(gym.GoalEnv):
         }
 
         self.seed()
+
         #print('[DEBUG@RobotEnv] initial_qpos = {}'.format(initial_qpos))
         #self._env_setup(initial_qpos=initial_qpos)
 
@@ -62,6 +63,7 @@ class RobotMujocoEnv(gym.GoalEnv):
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
+        random_seed(123)
         return [seed]
 
     def step(self, action):
@@ -70,8 +72,8 @@ class RobotMujocoEnv(gym.GoalEnv):
         #print('action = {}'.format(action))
         n_frames = 20
         if self.randomize_action_timesteps == True:
-            random_seed(1)
             n_frames = n_frames + randint(0,1500)
+            #print('action timesteps = {}'.format(n_frames))
         self.do_simulation(action, n_frames)
         #self._step_callback()
         obs = self._get_obs()  # TODO: add real robot implementation
@@ -80,8 +82,8 @@ class RobotMujocoEnv(gym.GoalEnv):
                 'is_success': self._is_success(obs['achieved_goal'], self.goal)
         }
         reward = self.compute_reward(obs['achieved_goal'], self.goal, info)
-        print('[STEP] Rewards = {}'.format(reward))
-        print('[STEP] info = {}'.format(info))
+        #print('[STEP] Rewards = {}'.format(reward))
+        #print('[STEP] info = {}'.format(info))
         return obs, reward, done, info
 
     def reset(self):

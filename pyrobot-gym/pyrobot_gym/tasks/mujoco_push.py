@@ -33,7 +33,7 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
                  obj_range=0.2,
                  target_range=0.15,
                  distance_threshold=0.05):
-        print("[LocoBotMujocoReachEnv] START init LocoBotMujocoPushEnv")
+        #print("[LocoBotMujocoReachEnv] START init LocoBotMujocoPushEnv")
         # Load as the Environment Parameters
         self.get_params(reward_type, n_actions, has_object, block_gripper, n_substeps, gripper_extra_height,
                     target_in_the_air, target_offset, obj_range, target_range, distance_threshold)
@@ -126,10 +126,10 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
                     violated_boundary = True
                     break
             if violated_boundary == True:
-                print('[Sample Object Position] Object Position exceeds Configuration space --> Need to resample')
+                #print('[Sample Object Position] Object Position exceeds Configuration space --> Need to resample')
                 sample_position = True
             elif np.linalg.norm(object_xpos - self.initial_gripper_xpos[:2]) < 0.1:
-                print('[Sample Object Position] Need to resample')
+                #print('[Sample Object Position] Need to resample')
                 sample_position = True
             else:
                 sample_position = False
@@ -163,7 +163,7 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
         #assert action.shape == (4,)
         action = action.copy()
         action = action*0.25 # restrict the action
-        print('[Set Action] Action = {}'.format(action))
+        #print('[Set Action] Action = {}'.format(action))
         self.valid_move = self.set_joints_position(action)
         self.sim.data.set_joint_qpos('joint_6', 0)
         self.sim.data.set_joint_qpos('joint_7', 0)

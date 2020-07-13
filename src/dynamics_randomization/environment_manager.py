@@ -21,7 +21,7 @@ class RandomizedEnvironment:
         pick = min + (max-min)*random.random()
 
         self._params = np.array([pick])
-        print('Sample an environment ....')
+        #print('Sample an environment ....')
         self._env = gym.make(self._experiment)
         self._env.reward_type = "sparse"
         # Mass of each link
