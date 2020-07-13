@@ -1,8 +1,8 @@
 # Ingore all pycache
 *.pyc
-src/dynamics_randomization/checkpoints
+src/dynamics_randomization/checkpoints*
 src/dynamics_randomization/__pycache__
-src/dynamics_randomization/tf_logs
+src/dynamics_randomization/tf_logs*
 src/dynamics_randomization/csv_log.csv
 src/using_gazebo_model
 src/using_mujoco_model

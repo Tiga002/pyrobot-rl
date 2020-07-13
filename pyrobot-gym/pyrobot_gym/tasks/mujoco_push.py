@@ -33,7 +33,7 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
                  obj_range=0.2,
                  target_range=0.15,
                  distance_threshold=0.05):
-        print("[LocoBotMujocoReachEnv] START init LocoBotMujocoReachEnv")
+        print("[LocoBotMujocoReachEnv] START init LocoBotMujocoPushEnv")
         # Load as the Environment Parameters
         self.get_params(reward_type, n_actions, has_object, block_gripper, n_substeps, gripper_extra_height,
                     target_in_the_air, target_offset, obj_range, target_range, distance_threshold)
@@ -111,7 +111,7 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
         self.sim.forward()
         robot_pos = self.sim.data.get_site_xpos('robot0:base')
         self.initial_gripper_xpos = self.sim.data.get_site_xpos('robot0:end_effector').copy() - robot_pos
-        print('[RESET] initial_gripper_xpos = {}'.format(self.initial_gripper_xpos))
+        #print('[RESET] initial_gripper_xpos = {}'.format(self.initial_gripper_xpos))
 
         # Randomize the starting position of the object
         object_xpos = self.initial_gripper_xpos[:2]
@@ -140,11 +140,11 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
         self.sim.data.set_joint_qpos('object0:joint', object_qpos)
         self.sim.forward()
         self.last_object_position = self.sim.data.get_site_xpos('object0') - robot_pos
-        print('[RESET] Object Position = {}'.format(self.last_object_position))
+        #print('[RESET] Object Position = {}'.format(self.last_object_position))
 
         # Sample a goal
         if self.use_random_goal:
-            print("SAMPLING a new DESIRED GOAL Position")
+            #print("SAMPLING a new DESIRED GOAL Position")
             self.goal = self._sample_goal(self.last_object_position)
         else:
             self.goal = np.array([0.34242378, -0.19046866, 0.])
@@ -152,7 +152,7 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
         #Record the joint pos and end effector pos right after the reset
         self.last_gripper_xpos = self.sim.data.get_site_xpos('robot0:end_effector').copy()- robot_pos
         self.last_joint_positions, _ = self.get_joints_position(self.sim)
-        print('[RESET] Initial Joint Position = {}'.format(self.last_joint_positions))
+        #print('[RESET] Initial Joint Position = {}'.format(self.last_joint_positions))
 
 
 
@@ -201,12 +201,12 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
         object_rel_velp = object_velp - eff_velp
 
         # DEBUG:
-        print('base_location = {}'.format(robot_pos))
-        print('[Get Obs] eff_pos = {}'.format(eff_pos))
-        print('[Get Obs] eff_velp = {}'.format(eff_velp))
-        print('[Get Obs] goal = {}'.format(self.goal))
-        print('[Get Obs] joint_pos = {}'.format(joint_positions))
-        print('[Get Obs] object_pos = {}'.format(object_pos))
+        #print('base_location = {}'.format(robot_pos))
+        #print('[Get Obs] eff_pos = {}'.format(eff_pos))
+        #print('[Get Obs] eff_velp = {}'.format(eff_velp))
+        #print('[Get Obs] goal = {}'.format(self.goal))
+        #print('[Get Obs] joint_pos = {}'.format(joint_positions))
+        #print('[Get Obs] object_pos = {}'.format(object_pos))
         self.last_joint_positions = joint_positions
         obs = np.concatenate([eff_pos,
                               eff_velp,
@@ -235,7 +235,7 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
             d = self.goal_distance(achieved_goal, desired_goal)
             return (d < self.distance_threshold).astype(np.float32)
         else:
-            print("[Is Success] Action is not feasible")
+            #print("[Is Success] Action is not feasible")
             return np.float(0.0)
 
     def compute_reward(self, achieved_goal, goal, info):
@@ -275,5 +275,5 @@ class LocoBotMujocoPushEnv(LocoBotMujocoEnv, utils.EzPickle):
             else:
                 sample_goal = False
             # end loop
-        print('[Sample Goal] Sampled Goal Position for the object = {}'.format(goal))
+        #print('[Sample Goal] Sampled Goal Position for the object = {}'.format(goal))
         return goal.copy()

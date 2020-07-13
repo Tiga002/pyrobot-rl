@@ -16,7 +16,7 @@ env = gym.make(experiment)
 
 # Testing Hyperparameters
 TESTING_INTERVAL = 200  # Number of updates between 2 evaluation of the policy
-TESTING_ROLLOUTS = 100  # Number of rollouts performed to evaluate the current policy
+TESTING_ROLLOUTS = 50  # Number of rollouts performed to evaluate the current policy
 
 # Algorithm Hyperparameters
 BATCH_SIZE = 32
@@ -38,6 +38,7 @@ if not os.path.exists(directory):
     os.makedirs(directory)
 
 for ep in range(EPISODES):
+    print('================== Episode {} ==========================='.format(ep))
     # 1. Generate a environment with randomized parameters
     randomized_environment.sample_env()
     env, env_params = randomized_environment.get_env()
@@ -59,7 +60,8 @@ for ep in range(EPISODES):
     done = False
 
     # Rollout the whole episode
-    while not done:
+    #while not done:
+    for t in range(MAX_STEPS):
         obs = current_obs_dict['observation']
         history = episode.get_history()
         noise = agent.action_noise()
@@ -67,7 +69,6 @@ for ep in range(EPISODES):
         action_output = agent.evaluate_actor(agent._actor.predict, obs, goal, history) + noise
         # Step the Environment
         action = [action_output[0][0], action_output[0][1], action_output[0][2], action_output[0][3]]
-        print('freah action = {}'.format(action))
         new_obs_dict, step_reward, done, info = env.step(action)
 
         new_obs = new_obs_dict['observation']
@@ -152,8 +153,9 @@ for ep in range(EPISODES):
         agent.update_target_critic()
 
     # perform policy evaluation
-    if ep % TESTING_INTERVAL == 0:
+    if ep % TESTING_INTERVAL == 0 and ep != 0:
         success_number = 0
+        print('Performing policy evalution ~~~~')
 
         for test_ep in range(TESTING_ROLLOUTS):
             randomized_environment.sample_env()
@@ -176,7 +178,8 @@ for ep in range(EPISODES):
             done = False
 
             # rollout the whole episode
-            while not done:
+            #while not done:
+            for t in range(MAX_STEPS):
                 obs = current_obs_dict['observation']
                 history = episode.get_history()
 

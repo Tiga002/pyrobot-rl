@@ -15,7 +15,7 @@ DEFAULT_SIZE = 500
 
 class RobotMujocoEnv(gym.GoalEnv):
     def __init__(self, model_path, initial_qpos, n_actions, n_substeps,randomize_action_timesteps):
-        print("[RobotMujocoEnv] START init RobotMujocoEnv")
+        #print("[RobotMujocoEnv] START init RobotMujocoEnv")
         if model_path.startswith('/'):
             fullpath = model_path
         else:
@@ -47,7 +47,7 @@ class RobotMujocoEnv(gym.GoalEnv):
         self.sim.set_state(self.initial_state)
         self.sim.forward()
         """
-        print("[RobotMujocoEnv] END init RobotMujocoEnv")
+        #print("[RobotMujocoEnv] END init RobotMujocoEnv")
 
     @property
     def dt(self):
@@ -67,7 +67,7 @@ class RobotMujocoEnv(gym.GoalEnv):
     def step(self, action):
         # Normalize the action within (-1,1)
         action = np.clip(action, self.action_space.low, self.action_space.high)
-        print('action = {}'.format(action))
+        #print('action = {}'.format(action))
         n_frames = 20
         if self.randomize_action_timesteps == True:
             random_seed(1)
@@ -85,12 +85,12 @@ class RobotMujocoEnv(gym.GoalEnv):
         return obs, reward, done, info
 
     def reset(self):
-        print('[RESET]')
+        #print('[RESET]')
         did_reset_sim = False
         while not did_reset_sim:
             did_reset_sim = self._reset_sim()
         obs = self._get_obs()
-        print('End [RESET]')
+        #print('End [RESET]')
         return obs
 
     def close(self):

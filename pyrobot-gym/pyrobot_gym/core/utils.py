@@ -53,7 +53,7 @@ def ctrl_set_action(sim, action):
                 # Debug
                 #print('sim.data.ctrl[{}] = sim.data.qpos[{}] + action[{}]'.format(i, idx, i))
                 #print('sim.data.ctrl[{}] = {} + {}'.format(i, sim.data.qpos[idx], action[i]))
-                print('sim.data.ctrl[{}] = {}'.format(i, sim.data.ctrl[i]))
+                #print('sim.data.ctrl[{}] = {}'.format(i, sim.data.ctrl[i]))
 
                 #new_state.qpos[idx] = sim.data.qpos[idx] + action[i]
                 #print('new_state.qpos[{}] = {} + {}'.format(idx, sim.data.qpos[idx], action[i]))
