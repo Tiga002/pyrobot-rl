@@ -1,32 +1,34 @@
 #!/usr/bin/env python
+import time
+
 import gym
-#import gym_pyrobot
-import pyrobot_gym
 import numpy as np
 
-""" Sample PyRobot Manipulation in Mujoco Environment """
-actions = []
-observation = []
-in0fos = []
 
 def main():
+    import pyrobot_gym
+    pyrobot_gym
     env = gym.make('LocoBotPush-v1')
-    #env = gym.make('FetchReach-v1')
-    numItr = 100
-    initStateSpace = "random"
+    # env = gym.make('FetchReach-v1')
+    numItr = 50
     env.reset()
-    print("Reset!")
-    while len(actions) < numItr:
-        obs = env.reset()
-        #print("ITERATION NUMBER ", len(actions))
-        env.render()
-        #print('env.action_space = {}'.format(env.action_space))i
-        #action = env.action_space.sample()
-        #action = np.array([0.02, -0.9, 0.023, 0., 0.])
-        #print('===== Action = {}'.format(action))
-        #obs = env.step(action)
 
-#        reachToGoal(env, obs)
+    print("Reset!")
+    for aid in range(4):
+        for pos_neg in range(-1, 2, 2):  # Positive and nagative
+            for i in range(numItr):
+                obs, r, d, i = env.step([
+                    float(aid == 0) * 0.1 * pos_neg,
+                    float(aid == 1) * 0.1 * pos_neg,
+                    float(aid == 2) * 0.1 * pos_neg,
+                    float(aid == 3) * 0.1 * pos_neg,
+                ])
+                print(f"Obs {obs}, Reward {r}, Done {d}, Info {i}")
+                env.render()
+                time.sleep(0.1)
+                if d:
+                    env.reset()
+
 
 def reachToGoal(env, lastObs):
     goal = lastObs['desired_goal']
@@ -39,16 +41,16 @@ def reachToGoal(env, lastObs):
     timeStep = 0
     episodeObs.append(lastObs)
     distance = np.linalg.norm(goal, axis=-1)
-    while distance >= 0.05: # and timeStep <= env._max_episode_steps:
+    while distance >= 0.05:  # and timeStep <= env._max_episode_steps:
         print("==================================")
         env.render()
         action = [0, 0, 0, 0]
         for i in range(len(goal)):
-            action[i] = goal[i]*6
+            action[i] = goal[i] * 6
             print('action[i] = {}'.format(action[i]))
             print('goal[i] = {}'.format(goal[i]))
 
-        action[len(action)-1] = 0 #remain close
+        action[len(action) - 1] = 0  # remain close
 
         obsDataNew, reward, done, info = env.step(action)
         timeStep += 1
@@ -70,7 +72,7 @@ def reachToGoal(env, lastObs):
     while True:
         env.render()
         action = [0, 0, 0, 0]
-        action[len(action)-1] = 0 # keep the gripper closed
+        action[len(action) - 1] = 0  # keep the gripper closed
 
         obsDataNew, reward, done, info = env.step(action)
         timeStep += 1
@@ -79,31 +81,9 @@ def reachToGoal(env, lastObs):
         episodeInfo.append(info)
         episodeObs.append(obsDataNew)
 
-        if timeStep >= 10000: break
+        if timeStep >= 10000:
+            break
 
-    actions.append(episodeAcs)
-    observations.append(episodeObs)
-    infos.append(episodeInfo)
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-"""
-env = gym.make('pyrobot-reach-v0')
-#env = gym.make('FetchReach-v1')
-env.reset()
-
-for _ in range(1000):
-    env.render()
-
-    env.step(env.action_space.sample())
-env.close()
-"""
