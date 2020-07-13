@@ -11,13 +11,6 @@ from timeit import default_timer as timer
 #from gym.envs.robotics import rotations, robot_env, utils
 from pyrobot_gym.core import robot_mujoco_env, rotations, utils
 
-import rospy
-from rospy.numpy_msg import numpy_msg
-from rospy_tutorials.msg import Floats
-from std_msgs.msg import String
-from std_msgs.msg import Bool
-
-
 
 
 class LocoBotMujocoEnv(robot_mujoco_env.RobotMujocoEnv):

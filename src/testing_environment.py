@@ -1,32 +1,214 @@
 #!/usr/bin/env python
+import math
+import time
+
+import glfw
 import gym
-#import gym_pyrobot
-import pyrobot_gym
 import numpy as np
 
-""" Sample PyRobot Manipulation in Mujoco Environment """
-actions = []
-observation = []
-in0fos = []
+
+def unit_vector(data, axis=None, out=None):
+    """
+    Copied from https://github.com/StanfordVL/robosuite/blob/master/
+    robosuite/utils/transform_utils.py
+    """
+    if out is None:
+        data = np.array(data, dtype=np.float32, copy=True)
+        if data.ndim == 1:
+            data /= math.sqrt(np.dot(data, data))
+            return data
+    else:
+        if out is not data:
+            out[:] = np.array(data, copy=False)
+        data = out
+    length = np.atleast_1d(np.sum(data * data, axis))
+    np.sqrt(length, length)
+    if axis is not None:
+        length = np.expand_dims(length, axis)
+    data /= length
+    if out is None:
+        return data
+
+
+def rotation_matrix(angle, direction, point=None):
+    """
+    Copied from https://github.com/StanfordVL/robosuite/blob/master/
+    robosuite/utils/transform_utils.py
+    """
+    sina = math.sin(angle)
+    cosa = math.cos(angle)
+    direction = unit_vector(direction[:3])
+    # rotation matrix around unit vector
+    R = np.array(
+        ((cosa, 0.0, 0.0), (0.0, cosa, 0.0), (0.0, 0.0, cosa)), dtype=np.float32
+    )
+    R += np.outer(direction, direction) * (1.0 - cosa)
+    direction *= sina
+    R += np.array(
+        (
+            (0.0, -direction[2], direction[1]),
+            (direction[2], 0.0, -direction[0]),
+            (-direction[1], direction[0], 0.0),
+        ),
+        dtype=np.float32,
+    )
+    M = np.identity(4)
+    M[:3, :3] = R
+    if point is not None:
+        # rotation not around origin
+        point = np.array(point[:3], dtype=np.float32, copy=False)
+        M[:3, 3] = point - np.dot(R, point)
+    return M
+
+
+class Keyboard:
+    """A minimalistic driver class for a Keyboard.
+    Copied from https://github.com/StanfordVL/robosuite/blob/master/
+    robosuite/devices/keyboard.py
+    """
+
+    def __init__(self):
+        """
+        Initialize a Keyboard device.
+        """
+
+        self._display_controls()
+        self._reset_internal_state()
+
+        self._reset_state = 0
+        self._enabled = False
+        self._pos_step = 0.05
+
+    def _display_controls(self):
+        """
+        Method to pretty print controls.
+        """
+
+        def print_command(char, info):
+            char += " " * (10 - len(char))
+            print("{}\t{}".format(char, info))
+
+        print("")
+        print_command("Keys", "Command")
+        print_command("q", "reset simulation")
+        print_command("spacebar", "toggle gripper (open/close)")
+        print_command("w-a-s-d", "move arm horizontally in x-y plane")
+        print_command("r-f", "move arm vertically")
+        print_command("z-x", "rotate arm about x-axis")
+        print_command("t-g", "rotate arm about y-axis")
+        print_command("c-v", "rotate arm about z-axis")
+        print_command("ESC", "quit")
+        print("")
+
+    def _reset_internal_state(self):
+        """
+        Resets internal state of controller, except for the reset signal.
+        """
+        self.rotation = np.array([[-1., 0., 0.], [0., 1., 0.], [0., 0., -1.]])
+        self.pos = np.zeros(3)  # (x, y, z)
+        self.last_pos = np.zeros(3)
+        self.grasp = False
+
+    def start_control(self):
+        """
+        Method that should be called externally before controller can
+        start receiving commands.
+        """
+        self._reset_internal_state()
+        self._reset_state = 0
+        self._enabled = True
+
+    def get_controller_state(self):
+        """Returns the current state of the keyboard, a dictionary of pos,
+        orn, grasp, and reset."""
+        dpos = self.pos - self.last_pos
+        self.last_pos = np.array(self.pos)
+        return dict(
+            dpos=dpos,
+            rotation=self.rotation,
+            grasp=int(self.grasp),
+            reset=self._reset_state,
+        )
+
+    def on_press(self, window, key, scancode, action, mods):
+        """
+        Key handler for key presses.
+        """
+
+        # controls for moving position
+        if key == glfw.KEY_W:
+            self.pos[0] -= self._pos_step  # dec x
+        elif key == glfw.KEY_S:
+            self.pos[0] += self._pos_step  # inc x
+        elif key == glfw.KEY_A:
+            self.pos[1] -= self._pos_step  # dec y
+        elif key == glfw.KEY_D:
+            self.pos[1] += self._pos_step  # inc y
+        elif key == glfw.KEY_F:
+            self.pos[2] -= self._pos_step  # dec z
+        elif key == glfw.KEY_R:
+            self.pos[2] += self._pos_step  # inc z
+
+        # controls for moving orientation
+        elif key == glfw.KEY_Z:
+            drot = rotation_matrix(angle=0.1, direction=[1., 0., 0.])[:3, :3]
+            self.rotation = self.rotation.dot(drot)  # rotates x
+        elif key == glfw.KEY_X:
+            drot = rotation_matrix(angle=-0.1, direction=[1., 0., 0.])[:3, :3]
+            self.rotation = self.rotation.dot(drot)  # rotates x
+        elif key == glfw.KEY_T:
+            drot = rotation_matrix(angle=0.1, direction=[0., 1., 0.])[:3, :3]
+            self.rotation = self.rotation.dot(drot)  # rotates y
+        elif key == glfw.KEY_G:
+            drot = rotation_matrix(angle=-0.1, direction=[0., 1., 0.])[:3, :3]
+            self.rotation = self.rotation.dot(drot)  # rotates y
+        elif key == glfw.KEY_C:
+            drot = rotation_matrix(angle=0.1, direction=[0., 0., 1.])[:3, :3]
+            self.rotation = self.rotation.dot(drot)  # rotates z
+        elif key == glfw.KEY_V:
+            drot = rotation_matrix(angle=-0.1, direction=[0., 0., 1.])[:3, :3]
+            self.rotation = self.rotation.dot(drot)  # rotates z
+
+    def on_release(self, window, key, scancode, action, mods):
+        """
+        Key handler for key releases.
+        """
+
+        # controls for grasping
+        if key == glfw.KEY_SPACE:
+            self.grasp = not self.grasp  # toggle gripper
+
+        # user-commanded reset
+        elif key == glfw.KEY_Q:
+            self._reset_state = 1
+            self._enabled = False
+            self._reset_internal_state()
+
 
 def main():
+    import pyrobot_gym
+    pyrobot_gym
     env = gym.make('LocoBotPush-v1')
-    #env = gym.make('FetchReach-v1')
-    numItr = 100
-    initStateSpace = "random"
+    # env = gym.make('FetchReach-v1')
+    numItr = 50
     env.reset()
-    print("Reset!")
-    while len(actions) < numItr:
-        obs = env.reset()
-        #print("ITERATION NUMBER ", len(actions))
-        env.render()
-        #print('env.action_space = {}'.format(env.action_space))i
-        #action = env.action_space.sample()
-        #action = np.array([0.02, -0.9, 0.023, 0., 0.])
-        #print('===== Action = {}'.format(action))
-        #obs = env.step(action)
 
-#        reachToGoal(env, obs)
+    print("Reset!")
+    for aid in range(4):
+        for pos_neg in range(-1, 2, 2):  # Positive and nagative
+            for i in range(numItr):
+                obs, r, d, i = env.step([
+                    float(aid == 0) * 0.1 * pos_neg,
+                    float(aid == 1) * 0.1 * pos_neg,
+                    float(aid == 2) * 0.1 * pos_neg,
+                    float(aid == 3) * 0.1 * pos_neg,
+                ])
+                print(f"Obs {obs}, Reward {r}, Done {d}, Info {i}")
+                env.render()
+                time.sleep(0.1)
+                if d:
+                    env.reset()
+
 
 def reachToGoal(env, lastObs):
     goal = lastObs['desired_goal']
@@ -39,16 +221,16 @@ def reachToGoal(env, lastObs):
     timeStep = 0
     episodeObs.append(lastObs)
     distance = np.linalg.norm(goal, axis=-1)
-    while distance >= 0.05: # and timeStep <= env._max_episode_steps:
+    while distance >= 0.05:  # and timeStep <= env._max_episode_steps:
         print("==================================")
         env.render()
         action = [0, 0, 0, 0]
         for i in range(len(goal)):
-            action[i] = goal[i]*6
+            action[i] = goal[i] * 6
             print('action[i] = {}'.format(action[i]))
             print('goal[i] = {}'.format(goal[i]))
 
-        action[len(action)-1] = 0 #remain close
+        action[len(action) - 1] = 0  # remain close
 
         obsDataNew, reward, done, info = env.step(action)
         timeStep += 1
@@ -70,7 +252,7 @@ def reachToGoal(env, lastObs):
     while True:
         env.render()
         action = [0, 0, 0, 0]
-        action[len(action)-1] = 0 # keep the gripper closed
+        action[len(action) - 1] = 0  # keep the gripper closed
 
         obsDataNew, reward, done, info = env.step(action)
         timeStep += 1
@@ -79,31 +261,9 @@ def reachToGoal(env, lastObs):
         episodeInfo.append(info)
         episodeObs.append(obsDataNew)
 
-        if timeStep >= 10000: break
+        if timeStep >= 10000:
+            break
 
-    actions.append(episodeAcs)
-    observations.append(episodeObs)
-    infos.append(episodeInfo)
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-"""
-env = gym.make('pyrobot-reach-v0')
-#env = gym.make('FetchReach-v1')
-env.reset()
-
-for _ in range(1000):
-    env.render()
-
-    env.step(env.action_space.sample())
-env.close()
-"""
