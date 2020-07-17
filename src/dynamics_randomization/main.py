@@ -9,7 +9,8 @@ from environment_manager import RandomizedEnvironment
 from agent import Agent
 from replay_buffer import Episode, ReplayBuffer
 
-EPISODES = 1000000
+#EPISODES = 1000000
+EPISODES = 8000000
 
 directory = "checkpoints"
 experiment = "LocoBotPush-v1"

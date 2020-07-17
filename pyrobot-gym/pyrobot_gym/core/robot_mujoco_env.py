@@ -72,7 +72,7 @@ class RobotMujocoEnv(gym.GoalEnv):
         #print('action = {}'.format(action))
         n_frames = 20
         if self.randomize_action_timesteps == True:
-            n_frames = n_frames + randint(0,1500)
+            n_frames = n_frames + randint(0,10)
             #print('action timesteps = {}'.format(n_frames))
         self.do_simulation(action, n_frames)
         #self._step_callback()
