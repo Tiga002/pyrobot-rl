@@ -30,7 +30,7 @@ DEFAULT_PARAMS = {
     'scope': 'ddpg',  # can be tweaked for testing
     'relative_goals': False,
     # training
-    'n_cycles': 800,  # per epoch (50)
+    'n_cycles': 800,  # per epoch (50)(800)
     'rollout_batch_size': 2,  # per mpi thread
     'n_batches': 40,  # training batches per cycle
     'batch_size': 256,  # per mpi thread, measured in transitions and reduced to even multiple of chunk_length.

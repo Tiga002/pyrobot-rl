@@ -132,6 +132,7 @@ class LocoBotGazeboEnv(robot_gazebo_env.RobotGazeboEnv):
 
     def _set_startup_position(self):
         result = self.robot.arm.go_home()
+        print('Reseting to startup position ~~~~~~~~')
         return result
 
     def set_trajectory_ee(self, action):

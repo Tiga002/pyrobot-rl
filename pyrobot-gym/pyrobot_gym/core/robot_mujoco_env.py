@@ -24,7 +24,7 @@ class RobotMujocoEnv(gym.GoalEnv):
             raise IOError('File {} does not exist'.format(fullpath))
 
         model = mujoco_py.load_model_from_path(fullpath)
-        self.sim = mujoco_py.MjSim(model, nsubsteps=1)
+        self.sim = mujoco_py.MjSim(model, nsubsteps=20)
         self.viewer = None
         self._viewers = {}
         self.randomize_action_timesteps = randomize_action_timesteps
@@ -70,11 +70,15 @@ class RobotMujocoEnv(gym.GoalEnv):
         # Normalize the action within (-1,1)
         action = np.clip(action, self.action_space.low, self.action_space.high)
         #print('action = {}'.format(action))
+        """
         n_frames = 20
         if self.randomize_action_timesteps == True:
             n_frames = n_frames + randint(0,10)
             #print('action timesteps = {}'.format(n_frames))
         self.do_simulation(action, n_frames)
+        """
+        self._set_action(action)
+        self.sim.step()
         #self._step_callback()
         obs = self._get_obs()  # TODO: add real robot implementation
         done = False

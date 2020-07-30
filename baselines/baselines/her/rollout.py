@@ -38,6 +38,7 @@ class RolloutWorker:
         self.Q_history = deque(maxlen=history_len)
 
         self.n_episodes = 0
+        self.episode_reward = 0
         self.reset_all_rollouts()
         self.clear_history()
 
@@ -46,6 +47,7 @@ class RolloutWorker:
         self.initial_o = self.obs_dict['observation']
         self.initial_ag = self.obs_dict['achieved_goal']
         self.g = self.obs_dict['desired_goal']
+        self.episode_reward = 0
 
     def generate_rollouts(self):
         """Performs `rollout_batch_size` rollouts in parallel for time horizon `T` with the current
@@ -86,10 +88,11 @@ class RolloutWorker:
             ag_new = np.empty((self.rollout_batch_size, self.dims['g']))
             success = np.zeros(self.rollout_batch_size)
             # compute new states and observations
-            obs_dict_new, _, done, info = self.venv.step(u)
+            obs_dict_new, step_reward, done, info = self.venv.step(u)
             o_new = obs_dict_new['observation']
             ag_new = obs_dict_new['achieved_goal']
             success = np.array([i.get('is_success', 0.0) for i in info])
+            self.episode_reward += step_reward
 
             if any(done):
                 # here we assume all environments are done is ~same number of steps, so we terminate rollouts whenever any of the envs returns done
@@ -133,7 +136,7 @@ class RolloutWorker:
             self.Q_history.append(np.mean(Qs))
         self.n_episodes += self.rollout_batch_size
 
-        return convert_episode_to_batch_major(episode)
+        return convert_episode_to_batch_major(episode), self.episode_reward
 
     def clear_history(self):
         """Clears all histories that are used for statistics
@@ -166,4 +169,3 @@ class RolloutWorker:
             return [(prefix + '/' + key, val) for key, val in logs]
         else:
             return logs
-

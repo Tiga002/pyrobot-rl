@@ -245,7 +245,7 @@ def main(args):
 
 
 if __name__ == "__main__":
-    rospy.init_node('locobot_her_node', log_level=rospy.DEBUG, anonymous=True)
+    rospy.init_node('locobot_her_node', log_level=rospy.ERROR, anonymous=True)
 
 
     main(sys.argv)

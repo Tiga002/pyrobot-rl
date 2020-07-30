@@ -35,7 +35,7 @@ class LocoBotMujocoReachEnv(LocoBotMujocoEnv, utils.EzPickle):
                  obj_range=0.15,
                  target_range=0.15,
                  distance_threshold=0.05):
-        print("[LocoBotMujocoReachEnv] START init LocoBotMujocoReachEnv")
+        #print("[LocoBotMujocoReachEnv] START init LocoBotMujocoReachEnv")
         # Load as the Environment Parameters
         self.get_params(reward_type, n_actions, has_object, block_gripper, n_substeps, gripper_extra_height,
                         target_in_the_air, target_offset, obj_range, target_range, distance_threshold)
@@ -54,7 +54,7 @@ class LocoBotMujocoReachEnv(LocoBotMujocoEnv, utils.EzPickle):
             initial_qpos=self.initial_qpos,
             reward_type=self.reward_type,
             n_actions=self.n_actions,
-            randomize_action_timesteps=True)
+            randomize_action_timesteps=False)
         utils.EzPickle.__init__(self)
 
         # Setup the Observation Space and Action Space here
@@ -109,11 +109,11 @@ class LocoBotMujocoReachEnv(LocoBotMujocoEnv, utils.EzPickle):
         self.sim.forward()
         robot_pos = np.array([0.4049, 0.48, 0])
         self.initial_gripper_xpos = self.sim.data.get_site_xpos('robot0:end_effector').copy() - robot_pos
-        print('[RESET] initial_gripper_xpos = {}'.format(self.initial_gripper_xpos))
+        #print('[RESET] initial_gripper_xpos = {}'.format(self.initial_gripper_xpos))
 
         # Sample a goal
         if self.use_random_goal:
-            print("SAMPLING a new DESIRED GOAL Position")
+            #print("SAMPLING a new DESIRED GOAL Position")
             self.goal = self._sample_goal(self.initial_gripper_xpos)
         else:
             self.goal = np.array([0.32126746, -0.03747156, 0.26531804])
@@ -121,7 +121,7 @@ class LocoBotMujocoReachEnv(LocoBotMujocoEnv, utils.EzPickle):
         # Record the joint pos and end effector pos right after the reset
         self.last_gripper_xpos = self.sim.data.get_site_xpos('robot0:end_effector')
         self.last_joint_positions, _ = self.get_joints_position(self.sim)
-        print('[RESET] Initial Joint Position = {}'.format(self.last_joint_positions))
+        #print('[RESET] Initial Joint Position = {}'.format(self.last_joint_positions))
 
     def _set_action(self, action):
         """
@@ -130,7 +130,7 @@ class LocoBotMujocoReachEnv(LocoBotMujocoEnv, utils.EzPickle):
         assert action.shape == (4,)
         action = action.copy()
         action = action*0.25 # restrict the action
-        print('[Set Action] Action = {}'.format(action))
+        #print('[Set Action] Action = {}'.format(action))
         self.valid_move = self.set_joints_position(action)
         self.sim.data.set_joint_qpos('joint_6', 0)
         self.sim.data.set_joint_qpos('joint_7', 0)
@@ -147,10 +147,10 @@ class LocoBotMujocoReachEnv(LocoBotMujocoEnv, utils.EzPickle):
         eff_pos = self.sim.data.get_site_xpos('robot0:end_effector') - robot_pos
         relative_dis_ee_goal = np.array([self.goal_distance(self.goal, eff_pos)])
         joint_positions, _ = self.get_joints_position(self.sim)
-        print('[Get Obs] effpos = {}'.format(eff_pos))
-        print('[Get Obs] goal = {}'.format(self.goal))
-        print('[Get Obs] distance = {}'.format(relative_dis_ee_goal))
-        print('[Get Obs] joint_pos = {}'.format(joint_positions))
+        #print('[Get Obs] effpos = {}'.format(eff_pos))
+        #print('[Get Obs] goal = {}'.format(self.goal))
+        #print('[Get Obs] distance = {}'.format(relative_dis_ee_goal))
+        #print('[Get Obs] joint_pos = {}'.format(joint_positions))
         self.last_joint_positions = joint_positions
         obs = np.concatenate([eff_pos,
                               relative_dis_ee_goal,
@@ -170,7 +170,7 @@ class LocoBotMujocoReachEnv(LocoBotMujocoEnv, utils.EzPickle):
             d = self.goal_distance(achieved_goal, desired_goal)
             return (d < self.distance_threshold).astype(np.float32)
         else:
-            print("Action is not feasible! Reward")
+            #print("Action is not feasible! Reward")
             return np.float32(0.0)
 
 
@@ -206,10 +206,10 @@ class LocoBotMujocoReachEnv(LocoBotMujocoEnv, utils.EzPickle):
                     violated_boundary = True
                     break
             if violated_boundary == True:
-                print('[Sample Goal] Sampled Goal Exists Boundaries --> Need to resample a valid goal')
+                #print('[Sample Goal] Sampled Goal Exists Boundaries --> Need to resample a valid goal')
                 sample_goal = True
             else:
                 sample_goal = False
         # end loop
-        print('[Sample Goal] Sampled Goal = {}'.format(goal))
+        #print('[Sample Goal] Sampled Goal = {}'.format(goal))
         return goal.copy()

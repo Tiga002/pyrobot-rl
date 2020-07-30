@@ -1,5 +1,8 @@
 # Ingore all pycache
 *.pyc
+# Ingore all txt and npy log files
+*.npy
+*.txt
 src/dynamics_randomization/checkpoints*
 src/dynamics_randomization/__pycache__
 src/dynamics_randomization/tf_logs*

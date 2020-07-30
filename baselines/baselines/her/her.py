@@ -11,6 +11,9 @@ from baselines.common.mpi_moments import mpi_moments
 import baselines.her.experiment.config as config
 from baselines.her.rollout import RolloutWorker
 
+pwd = os.path.dirname(os.path.realpath(__file__))
+ACC_REWARD_LOG_PATH = os.path.abspath(os.path.join(pwd, 'experiment', 'acc_reward.npy'))
+
 def mpi_average(value):
     if not isinstance(value, list):
         value = [value]
@@ -18,12 +21,13 @@ def mpi_average(value):
         value = [0.]
     return mpi_moments(np.array(value))[0]
 
+"""For recording the episode_accumulate_reward and epoch_accumulate_reward"""
 
 def train(*, policy, rollout_worker, evaluator,
           n_epochs, n_test_rollouts, n_cycles, n_batches, policy_save_interval,
           save_path, demo_file, **kwargs):
     rank = MPI.COMM_WORLD.Get_rank()
-
+    epoch_acc_reward = np.array([])
     if save_path:
         latest_policy_path = os.path.join(save_path, 'policy_latest.pkl')
         best_policy_path = os.path.join(save_path, 'policy_best.pkl')
@@ -32,15 +36,19 @@ def train(*, policy, rollout_worker, evaluator,
     logger.info("Training...")
     best_success_rate = -1
 
+
     if policy.bc_loss == 1: policy.init_demo_buffer(demo_file) #initialize demo buffer if training with demonstrations
 
     # num_timesteps = n_epochs * n_cycles * rollout_length * number of rollout workers
     for epoch in range(n_epochs):
         # train
         rollout_worker.clear_history()
+        epoch_reward = 0
         for _ in range(n_cycles):
-            episode = rollout_worker.generate_rollouts()
+            episode, episode_reward = rollout_worker.generate_rollouts()
+            print('Episode #{} sum_reward = {}'.format(_, episode_reward))
             policy.store_episode(episode)
+            epoch_reward += episode_reward
             for _ in range(n_batches):
                 policy.train()
             policy.update_target_net()
@@ -58,7 +66,9 @@ def train(*, policy, rollout_worker, evaluator,
             logger.record_tabular(key, mpi_average(val))
         for key, val in policy.logs():
             logger.record_tabular(key, mpi_average(val))
-
+        # Log Epoch reward
+        print('======= Epoch #{} Accumulated Reward = {} ======'.format(epoch, epoch_reward))
+        epoch_acc_reward = np.append(epoch_acc_reward, epoch_reward)
         if rank == 0:
             logger.dump_tabular()
 
@@ -80,7 +90,10 @@ def train(*, policy, rollout_worker, evaluator,
         MPI.COMM_WORLD.Bcast(root_uniform, root=0)
         if rank != 0:
             assert local_uniform[0] != root_uniform[0]
-
+    #np.savetxt(ACC_REWARD_LOG_PATH, epoch_acc_reward)
+    #with open('ACC_REWARD_LOG_PATH', 'wb') as f:
+    #    np.save(f, epoch_acc_reward)
+    np.save(ACC_REWARD_LOG_PATH, epoch_acc_reward)
     return policy
 
 

@@ -284,7 +284,7 @@ class LocoBotGazeboPushEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle):
 
         if movement_result:
             distance = self.calculate_distance_between(desired_position, current_obj_pos)
-            rospy.logerr('distance = {}'.format(distance))
+            #rospy.logerr('distance = {}'.format(distance))
             if distance < abs(threshold_error):
                 done = np.float32(1.0) # True
                 rospy.logdebug(" Object Reach the desired position")
@@ -310,7 +310,7 @@ class LocoBotGazeboPushEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle):
         """
         if movement_result:
             distance = self.calculate_distance_between(desired_position, current_obj_pos)
-            rospy.logerr('distance = {}'.format(distance))
+            #rospy.logerr('distance = {}'.format(distance))
             if distance < threshold_error:
                 reward = np.float32(self.reached_goal_reward) # 0
                 rospy.logdebug("Reached the desired position! Reward = {}".format(reward))

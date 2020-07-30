@@ -91,7 +91,7 @@ class GazeboConnection():
             rospy.logerr("SIMULATION RESET")
             self.resetSimulation()
         elif self.reset_world_or_sim == "WORLD":
-            rospy.logerr("WORLD RESET")
+            #rospy.logerr("WORLD RESET")
             self.resetWorld()
         elif self.reset_world_or_sim == "NO_RESET_SIM":
             rospy.logerr("NO RESET SIMULATION SELECTED")
