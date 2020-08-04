@@ -55,22 +55,22 @@
       <!-- Elbow Link -->
       <body name="elbow_link" pos="0 0 0.04125">
         <inertial pos="0.00959756 -2.3093e-10 0.134297" quat="0.705844 0.0422381 0.0422381 0.705844" mass="0.212483" diaginertia="0.0012235 0.00119077 7.43429e-05" />
-        <joint name="joint_2" pos="0 0 0" axis="0 1 0" limited="true" range="-0.5 1.57" />
+        <joint name="joint_2" pos="0 0 0" axis="0 1 0" damping="50" limited="true" range="-0.5 1.57" />
         <geom type="mesh" contype="0" conaffinity="0" group="1" mesh="elbow_link" material="elbow_link" class="robot0:black" />
         <!-- Forearm link -->
         <body name="forearm_link" pos="0.05 0 0.2">
           <inertial pos="0.11783 0 -1.26219e-08" quat="0 0.707107 0 0.707107" mass="0.187464" diaginertia="0.000737166 0.00072521 3.94143e-05" />
-          <joint name="joint_3" pos="0 0 0" axis="0 1 0" limited="true" range="-1.57 1.57" />
+          <joint name="joint_3" pos="0 0 0" axis="0 1 0" damping="50" limited="true" range="-1.57 1.57" />
           <geom type="mesh" contype="0" conaffinity="0" group="1" mesh="forearm_link" material="forearm_link" class="robot0:orange" />
           <!-- Wrist Link -->
           <body name="wrist_link" pos="0.2002 0 0">
             <inertial pos="0.042941 4.98645e-05 0.0114267" quat="0.0526331 0.462852 0.0284284 0.884415" mass="0.0605922" diaginertia="2.0979e-05 2.08943e-05 1.73078e-05" />
-            <joint name="joint_4" pos="0 0 0" axis="0 1 0" limited="true" range="-1.57 1.57" />
+            <joint name="joint_4" pos="0 0 0" axis="0 1 0" damping="50" limited="true" range="-1.57 1.57" />
             <geom type="mesh" contype="0" conaffinity="0" group="1"  mesh="wrist_link" material="wrist_link" class="robot0:black" />
             <!-- Gripper Link -->
             <body name="gripper_link" pos="0.063 0.0001 0">
               <inertial pos="0.0303034 -1.00406e-05 0.0150805" quat="0.359874 0.610879 0.606151 0.360414" mass="0.0998368" diaginertia="6.24793e-05 6.16818e-05 4.76112e-05" />
-              <joint name="joint_5" pos="0 0 0" axis="-1 0 0" limited="true" range="-1.57 1.57" />
+              <joint name="joint_5" pos="0 0 0" axis="-1 0 0" damping="50" limited="true" range="-1.57 1.57" />
               <geom type="mesh" contype="0" conaffinity="0" group="1" mesh="gripper_link" material="gripper_link" class="robot0:orange" />
               <body name="ar_tag" pos="0.02695 0 0.01315">
                 <inertial mass="0.0202622634619862" pos="0.02695 0 0.04315" />

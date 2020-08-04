@@ -23,9 +23,9 @@ def mpi_average(value):
 
 """For recording the episode_accumulate_reward and epoch_accumulate_reward"""
 
-def train(*, policy, rollout_worker, evaluator,
-          n_epochs, n_test_rollouts, n_cycles, n_batches, policy_save_interval,
-          save_path, demo_file, **kwargs):
+def train(*, policy, source_env_rollout_worker, target_env_rollout_worker,
+          evaluator, n_epochs, n_test_rollouts, n_cycles, n_batches,
+          policy_save_interval, save_path, demo_file, **kwargs):
     rank = MPI.COMM_WORLD.Get_rank()
     epoch_acc_reward = np.array([])
     if save_path:
@@ -42,10 +42,26 @@ def train(*, policy, rollout_worker, evaluator,
     # num_timesteps = n_epochs * n_cycles * rollout_length * number of rollout workers
     for epoch in range(n_epochs):
         # train
-        rollout_worker.clear_history()
+        source_env_rollout_worker.clear_history()
+        target_env_rollout_worker.clear_history()
         epoch_reward = 0
+        train_in_source_domain = True
+        # Iterative scheme
+        if (epoch >= 0 and epoch < 50) or (epoch >= 75 and epoch < 125) or (epoch >= 150 and epoch < n_epochs):
+            # DEBUG:
+            print('Train in source domain ~~~')
+            train_in_source_domain = True
+        elif (epoch >= 50 and epoch < 75) or (epoch >= 125 and epoch < 150):
+            # DEBUG:
+            print('Train in target domain ~~~')
+            train_in_source_domain = False
+        else:
+            train_in_source_domain = True
         for _ in range(n_cycles):
-            episode, episode_reward = rollout_worker.generate_rollouts()
+            if train_in_source_domain == True:
+                episode, episode_reward = source_env_rollout_worker.generate_rollouts()
+            else:
+                episode, episode_reward = target_env_rollout_worker.generate_rollouts()
             print('Episode #{} sum_reward = {}'.format(_, episode_reward))
             policy.store_episode(episode)
             epoch_reward += episode_reward
@@ -62,11 +78,16 @@ def train(*, policy, rollout_worker, evaluator,
         logger.record_tabular('epoch', epoch)
         for key, val in evaluator.logs('test'):
             logger.record_tabular(key, mpi_average(val))
-        for key, val in rollout_worker.logs('train'):
-            logger.record_tabular(key, mpi_average(val))
+        if train_in_source_domain == True:
+            for key, val in source_env_rollout_worker.logs('train'):
+                logger.record_tabular(key, mpi_average(val))
+        else:
+            for key, val in target_env_rollout_worker.logs('train'):
+                logger.record_tabular(key, mpi_average(val))
         for key, val in policy.logs():
             logger.record_tabular(key, mpi_average(val))
         # Log Epoch reward
+        print('======= Epoch trained in source domain : {} ===='.format(train_in_source_domain))
         print('======= Epoch #{} Accumulated Reward = {} ======'.format(epoch, epoch_reward))
         epoch_acc_reward = np.append(epoch_acc_reward, epoch_reward)
         if rank == 0:
@@ -97,7 +118,7 @@ def train(*, policy, rollout_worker, evaluator,
     return policy
 
 
-def learn(*, network, env, total_timesteps,
+def learn(*, network, source_env, target_env, total_timesteps,
     seed=None,
     eval_env=None,
     replay_strategy='future',
@@ -121,7 +142,7 @@ def learn(*, network, env, total_timesteps,
 
     # Prepare params.
     params = config.DEFAULT_PARAMS
-    env_name = env.spec.id
+    env_name = source_env.spec.id
     params['env_name'] = env_name
     params['replay_strategy'] = replay_strategy
     if env_name in config.DEFAULT_ENV_PARAMS:
@@ -130,7 +151,7 @@ def learn(*, network, env, total_timesteps,
     with open(os.path.join(logger.get_dir(), 'params.json'), 'w') as f:
          json.dump(params, f)
     params = config.prepare_params(params)
-    params['rollout_batch_size'] = env.num_envs
+    params['rollout_batch_size'] = source_env.num_envs
 
     if demo_file is not None:
         params['bc_loss'] = 1
@@ -175,17 +196,19 @@ def learn(*, network, env, total_timesteps,
         rollout_params[name] = params[name]
         eval_params[name] = params[name]
 
-    eval_env = eval_env or env
+    eval_env = eval_env or source_env
 
-    rollout_worker = RolloutWorker(env, policy, dims, logger, monitor=True, **rollout_params)
+    source_env_rollout_worker = RolloutWorker(source_env, policy, dims, logger, monitor=True, **rollout_params)
+    target_env_rollout_worker = RolloutWorker(target_env, policy, dims, logger, monitor=True, **rollout_params)
     evaluator = RolloutWorker(eval_env, policy, dims, logger, **eval_params)
 
     n_cycles = params['n_cycles']
-    n_epochs = total_timesteps // n_cycles // rollout_worker.T // rollout_worker.rollout_batch_size
+    n_epochs = total_timesteps // n_cycles // source_env_rollout_worker.T // source_env_rollout_worker.rollout_batch_size
 
     return train(
-        save_path=save_path, policy=policy, rollout_worker=rollout_worker,
-        evaluator=evaluator, n_epochs=n_epochs, n_test_rollouts=params['n_test_rollouts'],
+        save_path=save_path, policy=policy, source_env_rollout_worker=source_env_rollout_worker,
+        target_env_rollout_worker=target_env_rollout_worker, evaluator=evaluator,
+        n_epochs=n_epochs, n_test_rollouts=params['n_test_rollouts'],
         n_cycles=params['n_cycles'], n_batches=params['n_batches'],
         policy_save_interval=policy_save_interval, demo_file=demo_file)
 
