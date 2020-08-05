@@ -298,21 +298,28 @@ def main(args):
         dones = np.zeros((1,))
 
         episode_rew = np.zeros(env.num_envs) if isinstance(env, VecEnv) else np.zeros(1)
-        while True:
-            if state is not None:
-                actions, _, state, _ = model.step(obs,S=state, M=dones)
-            else:
-                actions, _, _, _ = model.step(obs)
+        no_of_failed = 0
+        for ep in range(500):
+            print("=== Episode {} ===".format(ep))
+            for t in range(50):
+            #while True:
+                if state is not None:
+                    actions, _, state, _ = model.step(obs,S=state, M=dones)
+                else:
+                    actions, _, _, _ = model.step(obs)
 
-            obs, rew, done, _ = env.step(actions)
-            episode_rew += rew
-            env.render()
-            done_any = done.any() if isinstance(done, np.ndarray) else done
-            if done_any:
-                for i in np.nonzero(done)[0]:
-                    print('episode_rew={}'.format(episode_rew[i]))
-                    episode_rew[i] = 0
+                obs, rew, done, _ = env.step(actions)
+                episode_rew += rew
+                env.render()
+                done_any = done.any() if isinstance(done, np.ndarray) else done
+                if done_any:
+                    for i in np.nonzero(done)[0]:
+                        print('episode_rew={}'.format(episode_rew[i]))
+                        episode_rew[i] = 0
+                if episode_rew == -50:
+                    no_of_failed = no_of_failed + 1
 
+    print("{} out of 500 episodes are failed".format(no_of_failed))
     env.close()
 
     return model
