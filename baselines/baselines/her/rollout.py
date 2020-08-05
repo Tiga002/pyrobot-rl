@@ -5,6 +5,13 @@ import pickle
 
 from baselines.her.util import convert_episode_to_batch_major, store_args
 
+BOUNDS_CEILLING = .45
+BOUNDS_FLOOR = .08
+BOUNDS_LEFTWALL = .45
+BOUNDS_RIGHTWALL = -.45
+BOUNDS_FRONTWALL = .5
+BOUNDS_BACKWALL = -.13
+
 
 class RolloutWorker:
 
@@ -66,6 +73,10 @@ class RolloutWorker:
         dones = []
         info_values = [np.empty((self.T - 1, self.rollout_batch_size, self.dims['info_' + key]), np.float32) for key in self.info_keys]
         Qs = []
+
+        CurrentState_Saver, Action_Saver, NextState_Saver = [], [], []
+        prev_obs = self.obs_dict.copy()
+        tmp_obs_dict = self.obs_dict.copy()
         for t in range(self.T):
             policy_output = self.policy.get_actions(
                 o, ag, self.g,
@@ -89,11 +100,39 @@ class RolloutWorker:
             success = np.zeros(self.rollout_batch_size)
             # compute new states and observations
             obs_dict_new, step_reward, done, info = self.venv.step(u)
+            next_state = obs_dict_new['observation']
+            """Rule Based Classifer"""
+            next_eff_pos = next_state[0][:3]
+            conditions = [next_eff_pos[0] <= BOUNDS_FRONTWALL, next_eff_pos[0] >= BOUNDS_BACKWALL,
+                          next_eff_pos[1] <= BOUNDS_LEFTWALL, next_eff_pos[1] >= BOUNDS_RIGHTWALL,
+                          next_eff_pos[2] <= BOUNDS_CEILLING, next_eff_pos[2] >= BOUNDS_FLOOR]
+            #print('next_eff_pos_conditions = {}'.format(conditions))
+            violated_boundary = False
+            for condition in conditions:
+                if not condition:
+                    violated_boundary = True
+                    break
+            if violated_boundary == True:
+                #print('Timestep {} is NOT FEASIBLE !!!'.format(t))
+                obs_dict_new = prev_obs
+                step_reward = -1.0
+            else:
+                prev_obs = obs_dict_new
+
             o_new = obs_dict_new['observation']
+            #print("At timestep {} :: o_new = {}".format(t, o_new))
             ag_new = obs_dict_new['achieved_goal']
             success = np.array([i.get('is_success', 0.0) for i in info])
             self.episode_reward += step_reward
 
+            """
+            current_state = prev_obs
+            CurrentState_Saver.append(current_state)
+            action = np.clip(u, self.venv.action_space.low, self.venv.action_space.high)
+            Action_Saver.append(action)
+            NextState_Saver.append(o_new)
+            prev_obs = o_new
+            """
             if any(done):
                 # here we assume all environments are done is ~same number of steps, so we terminate rollouts whenever any of the envs returns done
                 # trick with using vecenvs is not to add the obs from the environments that are "done", because those are already observations
@@ -136,7 +175,7 @@ class RolloutWorker:
             self.Q_history.append(np.mean(Qs))
         self.n_episodes += self.rollout_batch_size
 
-        return convert_episode_to_batch_major(episode), self.episode_reward
+        return convert_episode_to_batch_major(episode), self.episode_reward# , CurrentState_Saver, Action_Saver, NextState_Saver
 
     def clear_history(self):
         """Clears all histories that are used for statistics

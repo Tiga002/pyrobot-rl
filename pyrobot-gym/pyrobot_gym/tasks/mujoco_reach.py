@@ -96,7 +96,7 @@ class LocoBotMujocoReachEnv(LocoBotMujocoEnv, utils.EzPickle):
         self.last_joint_positions = None
         self.last_gripper_xpos = None
         self.valid_move = True
-        self.randomize_action_timesteps = True
+        self.randomize_action_timesteps = False
 
     def _set_init_pose(self):
         """

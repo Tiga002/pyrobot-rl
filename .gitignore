@@ -2,6 +2,7 @@
 *.pyc
 # Ingore all txt and npy log files
 *.npy
+*.npz
 *.txt
 src/dynamics_randomization/checkpoints*
 src/dynamics_randomization/__pycache__
