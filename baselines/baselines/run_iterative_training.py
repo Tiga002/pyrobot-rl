@@ -315,10 +315,11 @@ def main(args):
                 if done_any:
                     for i in np.nonzero(done)[0]:
                         print('episode_rew={}'.format(episode_rew[i]))
+                        if episode_rew == -50.0:
+                            print("FAILED")
+                            no_of_failed = no_of_failed + 1
                         episode_rew[i] = 0
-                if episode_rew == -50:
-                    no_of_failed = no_of_failed + 1
-
+                        
     print("{} out of 500 episodes are failed".format(no_of_failed))
     env.close()
 
