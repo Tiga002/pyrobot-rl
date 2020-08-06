@@ -68,14 +68,15 @@ class RobotGazeboEnv(gym.GoalEnv):
         #done = self._is_done(obs)
         done = False
         info = {'is_success': self._is_done(obs)}
+        print('[step] info[is_success] = {}'.format(info['is_success']))
         # only in --play
         """
-        if info['is_success'] == 1:
-            done = True
-            time.sleep(1)
-            rospy.logwarn("=======  DONE ==========")
+        if info['is_success'] == 1.0:
+            done = 1.0
+            #time.sleep(1)
+            #rospy.logwarn("=======  DONE ==========")
         else:
-            done = False
+            done = 0.0
         """
         reward = self.compute_reward(obs['achieved_goal'], obs['desired_goal'], info)
         #print('[STEP] Rewards = {}'.format(reward))
@@ -154,7 +155,7 @@ class RobotGazeboEnv(gym.GoalEnv):
             self._check_all_systems_ready()
             self.gazebo.pauseSim()
         else:
-            rospy.logwarn("DONT RESET CONTROLLERS")
+            rospy.logdebug("DONT RESET CONTROLLERS")
             self.gazebo.unpauseSim()
             self._check_all_systems_ready()
             self._set_init_pose()

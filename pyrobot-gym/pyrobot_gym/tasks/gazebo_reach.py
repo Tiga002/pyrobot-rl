@@ -14,7 +14,7 @@ from pyrobot_gym.tasks.task_commons import LoadYamlFileParamsTest
 Boundaries of the Configuration Space
 """
 BOUNDS_CEILLING = .45
-BOUNDS_FLOOR = .15
+BOUNDS_FLOOR = .08
 BOUNDS_LEFTWALL = .45
 BOUNDS_RIGHTWALL = -.45
 BOUNDS_FRONTWALL = .5
@@ -213,6 +213,7 @@ class LocoBotGazeboReachEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle)
 
         done = self.check_if_done(
             self.movement_result, self.desired_position, current_eff_pos, self.threshold_error)
+        print('[is_done] done = {}'.format(done))
         return done
 
     def compute_reward(self, achieved_goal, goal, info):
@@ -245,17 +246,17 @@ class LocoBotGazeboReachEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle)
 
         if movement_result:
             distance = self.calculate_distance_between(desired_position, current_eff_pos)
-            rospy.logerr('distance = {}'.format(distance))
+            #rospy.logerr('distance = {}'.format(distance))
             if distance < abs(threshold_error):
                 done = np.float32(1.0) # True
-                rospy.logdebug("Reach the desired position")
+                rospy.logwarn("Reach the desired position")
             else:
                 done = np.float32(0.0) # False
-                rospy.logdebug("Still Reaching the desired position")
+                rospy.logwarn("Still Reaching the desired position")
         else:
             # movement_result = false, end the episode
             done = np.float32(0.0) # False
-            rospy.logdebug("The action position is not possible --> end the episode")
+            rospy.logwarn("The action position is not possible --> end the episode")
 
         return done
 
@@ -271,7 +272,7 @@ class LocoBotGazeboReachEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle)
         """
         if movement_result:
             distance = self.calculate_distance_between(desired_position, current_eff_pos)
-            rospy.logerr('distance = {}'.format(distance))
+            #rospy.logerr('distance = {}'.format(distance))
             if distance < threshold_error:
                 reward = np.float32(self.reached_goal_reward) # 0
                 rospy.logdebug("Reached the desired position! Reward = {}".format(reward))
@@ -302,6 +303,14 @@ class LocoBotGazeboReachEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle)
                                                 -0.1,
                                                 self.random_target_range,
                                                 size=3)
+            goal[:2] = end_effector_starting_pos[:2] + self.np_random.uniform(
+                                                -0.1,
+                                                self.random_target_range,
+                                                size=2)
+            goal[2:] = end_effector_starting_pos[2:] + self.np_random.uniform(
+                                                -0.35,
+                                                self.random_target_range,
+                                                size=1)
             conditions = [goal[0] <= BOUNDS_FRONTWALL, goal[0] >= BOUNDS_BACKWALL,
                           goal[1] <= BOUNDS_LEFTWALL, goal[1] >= BOUNDS_RIGHTWALL,
                           goal[2] <= BOUNDS_CEILLING, goal[2] >= BOUNDS_FLOOR]

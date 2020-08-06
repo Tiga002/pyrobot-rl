@@ -225,27 +225,45 @@ def main(args):
         dones = np.zeros((1,))
 
         episode_rew = np.zeros(env.num_envs) if isinstance(env, VecEnv) else np.zeros(1)
-
-        while True:
-            if state is not None:
-                actions, _, state, _ = model.step(obs, S=state, M=dones)
-            else:
-                actions, _, _, _ = model.step(obs)
-            obs, rew, done, info = env.step(actions)
-            episode_rew += rew
+        no_of_failed = 0
+        for ep in range(50):
+            obs = env.reset()
+            state = model.initial_state if hasattr(model, 'initial_state') else None
+            dones = np.zeros((1,))
+            episode_rew = np.zeros(env.num_envs) if isinstance(env, VecEnv) else np.zeros(1)
+            for t in range(50):
+                print("Episode #{} timesteps:{}".format(ep, t))
+                #while True:
+                if state is not None:
+                    actions, _, state, _ = model.step(obs, S=state, M=dones)
+                else:
+                    actions, _, _, _ = model.step(obs)
+                obs, rew, _, info = env.step(actions)
+                if info[0]['is_success'] == 1.0:
+                    done = True
+                else:
+                    done = False
+                print('[Play] done = {}'.format(done))
+                episode_rew += rew
 #            env.render()
-            done_any = done.any() if isinstance(done, np.ndarray) else done
-            if done_any:
-                for i in np.nonzero(done)[0]:
-                    print('episode_rew={}'.format(episode_rew[i]))
-                    episode_rew[i] = 0
+                if done == True:
+                    print('Episode #{} :: episode_rew={}'.format(ep, episode_rew[0]))
+                    rospy.logwarn("Episode #{} -> SUCCEED".format(ep))
+                    break
+                elif done != True and t == 49:
+                    print('Episode #{} :: episode_rew={}'.format(ep, episode_rew[0]))
+                    rospy.logerr("Episode #{} -> FAILED".format(ep))
+                    no_of_failed = no_of_failed + 1
+                else:
+                    pass
 
+    rospy.logerr("{} out of 50 episodes are failed".format(no_of_failed))
     env.close()
     return model
 
 
 if __name__ == "__main__":
-    rospy.init_node('locobot_her_node', log_level=rospy.ERROR, anonymous=True)
+    rospy.init_node('locobot_her_node', log_level=rospy.WARN, anonymous=True)
 
 
     main(sys.argv)
