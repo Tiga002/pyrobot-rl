@@ -238,8 +238,6 @@ def main(args):
             episode_rew += rew
             env.render()
             done_any = done.any() if isinstance(done, np.ndarray) else done
-            print('done = {}'.format(done))
-            print('done_any = {}'.format(done_any))
             if done_any:
                 for i in np.nonzero(done)[0]:
                     print('episode_rew={}'.format(episode_rew[i]))
