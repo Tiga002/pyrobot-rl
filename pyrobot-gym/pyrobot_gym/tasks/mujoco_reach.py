@@ -197,6 +197,8 @@ class LocoBotMujocoReachEnv(LocoBotMujocoEnv, utils.EzPickle):
         while sample_goal == True:
             #goal = np.array([0.74780095, 0.40455716, 0.28715335]) + self.np_random.uniform(-self.target_range, self.target_range, size=3)
             goal = initial_ee_pos + self.np_random.uniform(-self.target_range, self.target_range, size=3)
+            goal[:2] = initial_ee_pos[:2] + self.np_random.uniform(-self.target_range, self.target_range, size=2)
+            goal[2:] = initial_ee_pos[2:] + self.np_random.uniform(-0.4, self.target_range, size=1)
             conditions = [goal[0] <= BOUNDS_FRONTWALL, goal[0] >= BOUNDS_BACKWALL,
                           goal[1] <= BOUNDS_LEFTWALL, goal[1] >= BOUNDS_RIGHTWALL,
                           goal[2] <= BOUNDS_CEILLING, goal[2] >= BOUNDS_FLOOR]

@@ -85,7 +85,15 @@ class LocoBotMujocoEnv(robot_mujoco_env.RobotMujocoEnv):
             )
         return np.zeros(0), np.zeros(0)
 
-
+    def rest_back_to_original_state(self, original_joint_states):
+        """Reset the MuJoCo Simulation back to State T"""
+        self.sim.data.set_joint_qpos('joint_1', original_joint_states[0])
+        self.sim.data.set_joint_qpos('joint_2', original_joint_states[1])
+        self.sim.data.set_joint_qpos('joint_3', original_joint_states[2])
+        self.sim.data.set_joint_qpos('joint_4', original_joint_states[3])
+        self.sim.data.set_joint_qpos('joint_5', original_joint_states[4])
+        self.sim.forward()
+        
     """
     def _step_callback(self):
         self.sim.data.set_joint_qpos('joint_6', 0.)

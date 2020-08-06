@@ -5,14 +5,6 @@ import pickle
 
 from baselines.her.util import convert_episode_to_batch_major, store_args
 
-BOUNDS_CEILLING = .45
-BOUNDS_FLOOR = .08
-BOUNDS_LEFTWALL = .45
-BOUNDS_RIGHTWALL = -.45
-BOUNDS_FRONTWALL = .5
-BOUNDS_BACKWALL = -.13
-
-
 class RolloutWorker:
 
     @store_args
@@ -100,25 +92,46 @@ class RolloutWorker:
             success = np.zeros(self.rollout_batch_size)
             # compute new states and observations
             obs_dict_new, step_reward, done, info = self.venv.step(u)
-            next_state = obs_dict_new['observation']
-            """Rule Based Classifer"""
-            next_eff_pos = next_state[0][:3]
-            conditions = [next_eff_pos[0] <= BOUNDS_FRONTWALL, next_eff_pos[0] >= BOUNDS_BACKWALL,
-                          next_eff_pos[1] <= BOUNDS_LEFTWALL, next_eff_pos[1] >= BOUNDS_RIGHTWALL,
-                          next_eff_pos[2] <= BOUNDS_CEILLING, next_eff_pos[2] >= BOUNDS_FLOOR]
-            #print('next_eff_pos_conditions = {}'.format(conditions))
-            violated_boundary = False
-            for condition in conditions:
-                if not condition:
-                    violated_boundary = True
-                    break
-            if violated_boundary == True:
-                #print('Timestep {} is NOT FEASIBLE !!!'.format(t))
-                obs_dict_new = prev_obs
-                step_reward = -1.0
-            else:
-                prev_obs = obs_dict_new
+            #print('First Sample action = {}'.format(u))
+            violated_boundary = info[0].get('violated_boundary', False)
+            resample_tryout_counter = 0
+            while violated_boundary == True and resample_tryout_counter < 10:
+                resample_tryout_counter = resample_tryout_counter + 1
+                print('Timestep {} is NOT FEASIBLE --> Sample a new action!!!'.format(t))
+                # Reset MuJoCo Sim back to original States
+                original_joint_states = prev_obs['observation'][0][4:]
+                #print('original_joint_states = {}'.format(original_joint_states))
+                self.venv.envs[0].rest_back_to_original_state(original_joint_states)
+                # Sample a new action and step again until valid action is made
 
+                policy_output = self.policy.get_actions(
+                    o, ag, self.g,
+                    compute_Q=self.compute_Q,
+                    noise_eps=self.noise_eps if not self.exploit else 0.,
+                    random_eps=self.random_eps if not self.exploit else 0.,
+                    use_target_net=self.use_target_net)
+
+                if self.compute_Q:
+                    u, Q = policy_output
+                    Qs.append(Q)
+                else:
+                    u = policy_output
+
+                if u.ndim == 1:
+                    # The non-batched case should still have a reasonable shape.
+                    u = u.reshape(1, -1)
+
+                #o_new = np.empty((self.rollout_batch_size, self.dims['o']))
+                #ag_new = np.empty((self.rollout_batch_size, self.dims['g']))
+                #success = np.zeros(self.rollout_batch_size)
+                obs_dict_new, step_reward, done, info = self.venv.step(u)
+                #print('new action = {}'.format(u))
+                violated_boundary = info[0].get('violated_boundary', False)
+                #obs_dict_new = prev_obs
+                step_reward = -1.0
+
+
+            prev_obs = obs_dict_new
             o_new = obs_dict_new['observation']
             #print("At timestep {} :: o_new = {}".format(t, o_new))
             ag_new = obs_dict_new['achieved_goal']
@@ -133,7 +146,8 @@ class RolloutWorker:
             NextState_Saver.append(o_new)
             prev_obs = o_new
             """
-            if any(done):
+            #if any(done):
+            if t == 49:
                 # here we assume all environments are done is ~same number of steps, so we terminate rollouts whenever any of the envs returns done
                 # trick with using vecenvs is not to add the obs from the environments that are "done", because those are already observations
                 # after a reset
@@ -148,6 +162,7 @@ class RolloutWorker:
                 self.reset_all_rollouts()
                 return self.generate_rollouts()
 
+            #print("Now is timestep #{} and Prev is not valid = {}".format(t,loop_val))
             dones.append(done)
             obs.append(o.copy())
             achieved_goals.append(ag.copy())
@@ -156,6 +171,7 @@ class RolloutWorker:
             goals.append(self.g.copy())
             o[...] = o_new
             ag[...] = ag_new
+
         obs.append(o.copy())
         achieved_goals.append(ag.copy())
 

@@ -13,6 +13,13 @@ except ImportError as e:
 
 DEFAULT_SIZE = 500
 
+BOUNDS_CEILLING = .45
+BOUNDS_FLOOR = .05
+BOUNDS_LEFTWALL = .45
+BOUNDS_RIGHTWALL = -.45
+BOUNDS_FRONTWALL = .5
+BOUNDS_BACKWALL = -.13
+
 class RobotMujocoEnv(gym.GoalEnv):
     def __init__(self, model_path, initial_qpos, n_actions, n_substeps,randomize_action_timesteps):
         #print("[RobotMujocoEnv] START init RobotMujocoEnv")
@@ -80,10 +87,25 @@ class RobotMujocoEnv(gym.GoalEnv):
         self._set_action(action)
         self.sim.step()
         #self._step_callback()
-        obs = self._get_obs()  # TODO: add real robot implementation
+        obs = self._get_obs()
+
+        """Rule Based Classifer"""
+        next_state = obs['observation']
+        next_eff_pos = next_state[:3]
+        conditions = [next_eff_pos[0] <= BOUNDS_FRONTWALL, next_eff_pos[0] >= BOUNDS_BACKWALL,
+                      next_eff_pos[1] <= BOUNDS_LEFTWALL, next_eff_pos[1] >= BOUNDS_RIGHTWALL,
+                      next_eff_pos[2] <= BOUNDS_CEILLING, next_eff_pos[2] >= BOUNDS_FLOOR]
+        #print('next_eff_pos_conditions = {}'.format(conditions))
+        violated_boundary = False
+        for condition in conditions:
+            if not condition:
+                violated_boundary = True
+                break
+
         done = False
         info = {
-                'is_success': self._is_success(obs['achieved_goal'], self.goal)
+                'is_success': self._is_success(obs['achieved_goal'], self.goal),
+                'violated_boundary': violated_boundary
         }
         reward = self.compute_reward(obs['achieved_goal'], self.goal, info)
         #print('[STEP] Rewards = {}'.format(reward))
@@ -220,3 +242,7 @@ class RobotMujocoEnv(gym.GoalEnv):
         to enforce additional constraints on the simulation state.
         """
         pass
+
+    def rest_back_to_original_state(self, original_joint_states):
+        """Reset the MuJoCo Simulation back to State T"""
+        raise NotImplementedError()
