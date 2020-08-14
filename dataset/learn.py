@@ -36,7 +36,7 @@ cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
                                                  save_weights_only=True,
                                                  verbose=1)
 
-model.fit(x_train, y_train, epochs=10,
+model.fit(x_train, y_train, epochs=20,
           validation_data=(x_test, y_test),
           callbacks=[cp_callback])
 #latest = tf.train.latest_checkpoint(checkpoint_dir)
