@@ -42,6 +42,7 @@ def train(*, policy, rollout_worker, evaluator,
     Epoch_CS_saver = []
     Epoch_A_saver = []
     Epoch_NS_saver = []
+    Epoch_Label_saver = []
     # num_timesteps = n_epochs * n_cycles * rollout_length * number of rollout workers
     for epoch in range(n_epochs):
         # train
@@ -50,12 +51,14 @@ def train(*, policy, rollout_worker, evaluator,
         Episode_CS_saver = []
         Episode_A_saver = []
         Episode_NS_saver = []
+        Episode_Label_saver = []
         for _ in range(n_cycles):
-            #episode, episode_reward, Episode_CS, Episode_A, Episode_NS = rollout_worker.generate_rollouts()
-            episode, episode_reward = rollout_worker.generate_rollouts()
-            #Episode_CS_saver.append(Episode_CS)
-            #Episode_A_saver.append(Episode_A)
-            #Episode_NS_saver.append(Episode_NS)
+            episode, episode_reward, Episode_CS, Episode_A, Episode_NS, Episode_Label = rollout_worker.generate_rollouts()
+            #episode, episode_reward = rollout_worker.generate_rollouts()
+            Episode_CS_saver.append(Episode_CS)
+            Episode_A_saver.append(Episode_A)
+            Episode_NS_saver.append(Episode_NS)
+            Episode_Label_saver.append(Episode_Label)
             print('Episode #{} sum_reward = {}'.format(_, episode_reward))
             policy.store_episode(episode)
             epoch_reward += episode_reward
@@ -63,11 +66,12 @@ def train(*, policy, rollout_worker, evaluator,
                 policy.train()
             policy.update_target_net()
 
-        """Save epoch information
+        """Save epoch information"""
         Epoch_CS_saver.append(Episode_CS_saver)
         Epoch_A_saver.append(Episode_A_saver)
         Epoch_NS_saver.append(Episode_NS_saver)
-        """
+        Epoch_Label_saver.append(Episode_Label_saver)
+
         # test
         evaluator.clear_history()
         for _ in range(n_test_rollouts):
@@ -109,7 +113,7 @@ def train(*, policy, rollout_worker, evaluator,
     #with open('ACC_REWARD_LOG_PATH', 'wb') as f:
     #    np.save(f, epoch_acc_reward)
     np.save(ACC_REWARD_LOG_PATH, epoch_acc_reward)
-    #np.savez_compressed('dataset.npz', cs=Epoch_CS_saver, a=Epoch_A_saver, ns=Epoch_NS_saver)
+    np.savez_compressed('dataset_gazebo.npz', cs=Epoch_CS_saver, a=Epoch_A_saver, ns=Epoch_NS_saver, l=Epoch_Label_saver)
     return policy
 
 

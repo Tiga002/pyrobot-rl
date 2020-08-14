@@ -174,6 +174,7 @@ class LocoBotGazeboPushEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle):
             rospy.loginfo("Joint Positions are feasbile ... " + str(cur_joint_pos))
         else:
             rospy.logerr("Joint Positions are not feasbile ... " + str(cur_joint_pos))
+        return self.movement_result
 
 
     def _get_obs(self):

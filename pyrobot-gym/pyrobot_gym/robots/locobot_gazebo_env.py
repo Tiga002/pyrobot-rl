@@ -190,6 +190,8 @@ class LocoBotGazeboEnv(robot_gazebo_env.RobotGazeboEnv):
             rospy.logerr('Desired Joint Positions are out of Joint Limits')
             result = False
         else:
+            result = self.robot.arm.set_joint_positions(positions_array, plan=False)
+            """
             # Check #2
             # Perform a Forward Kinematics on the new desired joint positions
             # To check if it is within the Configuration Space
@@ -211,6 +213,7 @@ class LocoBotGazeboEnv(robot_gazebo_env.RobotGazeboEnv):
                 rospy.logdebug('Desired gripper place within the configuration space Boundaries')
                 result = self.robot.gripper.close()
                 result = self.robot.arm.set_joint_positions(positions_array, plan=False)
+            """
         #time.sleep(1)
         # Only in play
         #if result == False:

@@ -171,6 +171,8 @@ class LocoBotGazeboReachEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle)
         else:
             rospy.logerr("Joint Positions are not feasbile ... " + str(cur_joint_pos))
 
+        return self.movement_result
+
 
     def _get_obs(self):
         """
@@ -213,7 +215,7 @@ class LocoBotGazeboReachEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle)
 
         done = self.check_if_done(
             self.movement_result, self.desired_position, current_eff_pos, self.threshold_error)
-        print('[is_done] done = {}'.format(done))
+        #print('[is_done] done = {}'.format(done))
         return done
 
     def compute_reward(self, achieved_goal, goal, info):
@@ -249,10 +251,10 @@ class LocoBotGazeboReachEnv(locobot_gazebo_env.LocoBotGazeboEnv, utils.EzPickle)
             #rospy.logerr('distance = {}'.format(distance))
             if distance < abs(threshold_error):
                 done = np.float32(1.0) # True
-                rospy.logwarn("Reach the desired position")
+                #rospy.logwarn("Reach the desired position")
             else:
                 done = np.float32(0.0) # False
-                rospy.logwarn("Still Reaching the desired position")
+                #rospy.logwarn("Still Reaching the desired position")
         else:
             # movement_result = false, end the episode
             done = np.float32(0.0) # False

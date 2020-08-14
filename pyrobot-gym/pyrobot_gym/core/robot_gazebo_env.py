@@ -62,13 +62,14 @@ class RobotGazeboEnv(gym.GoalEnv):
         rospy.loginfo("START STEP OpenAI ROS")
 
         self.gazebo.unpauseSim()
-        self._set_action(action)
+        movement_result = self._set_action(action)
         self.gazebo.pauseSim()
         obs = self._get_obs()
         #done = self._is_done(obs)
         done = False
-        info = {'is_success': self._is_done(obs)}
-        print('[step] info[is_success] = {}'.format(info['is_success']))
+        info = {'is_success': self._is_done(obs),
+                'is_feasible': movement_result}
+        #print('[step] info[is_success] = {}'.format(info['is_success']))
         # only in --play
         """
         if info['is_success'] == 1.0:
