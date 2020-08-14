@@ -15,3 +15,4 @@ src/Comparison
 /venv_pyrobot_rl
 src/plot_test.py
 src/plotting/put_plot_together.py
+dataset/checkpoints/
